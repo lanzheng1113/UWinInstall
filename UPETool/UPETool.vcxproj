@@ -115,6 +115,7 @@
     <ClInclude Include="CmdExecuter.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="DialogImagexBackup.h" />
+    <ClInclude Include="DlgImagexRestore.h" />
     <ClInclude Include="DriverInfo.h" />
     <ClInclude Include="Markup.h" />
     <ClInclude Include="PartionInfo.h" />
@@ -130,6 +131,7 @@
   <ItemGroup>
     <ClCompile Include="CmdExecuter.cpp" />
     <ClCompile Include="DialogImagexBackup.cpp" />
+    <ClCompile Include="DlgImagexRestore.cpp" />
     <ClCompile Include="DriverInfo.cpp" />
     <ClCompile Include="Markup.cpp" />
     <ClCompile Include="PartionInfo.cpp" />

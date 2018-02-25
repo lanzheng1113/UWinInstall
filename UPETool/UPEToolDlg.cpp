@@ -19,12 +19,14 @@
 #include "util/StringEx.h"
 // CUPEToolDlg 对话框
 using std::string;
-
+#include "DlgImagexRestore.h"
 
 CUPEToolDlg::CUPEToolDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CUPEToolDlg::IDD, pParent)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+	m_bIsWIMInstall = FALSE;
+	m_bIsISOWinXPInstall = FALSE;
 }
 
 void CUPEToolDlg::DoDataExchange(CDataExchange* pDX)
@@ -342,7 +344,69 @@ void CUPEToolDlg::OnBnClickedOk()
 			//ISO选中时应该要跳到对应的WIM和GHOST中，我们放过它
 			//这些逻辑都有在组合框的on_sel_change中处理，所以不应该会选中ISO.如果真的陪到了这种意外情况，那么尝试重新加载之
 			OnCbnSelchangeComboIsoghost();
-			TRACE(_T("未能识别的ISO，将他重新加载后再试一次"));
+			LOG_INFO("未能识别的ISO，将他重新加载后再试一次");
+		}
+		else
+		{
+			//不是GHO,WIM,ISO的类型，确认一下当前选中的COMBOX项是不是子项
+			int nItem = m_comboIsoGho.GetCurSel();
+			CString strCurrentSel;
+			m_comboIsoGho.GetLBText(nItem,strCurrentSel);
+			//LOG_INFO("当前选中的子项为：%s",String::fromStdWString((LPCTSTR)strCurrentSel).c_str());
+			//确认是不是子项
+			for (int i=0; i!=m_ExtraItems.size(); i++)
+			{
+				//LOG_INFO("寻找当前项匹配的子项,子项=%s",String::fromStdWString((LPCTSTR)m_ExtraItems[i].m_strName).c_str());
+				if (m_ExtraItems[i].m_strName == strCurrentSel)
+				{
+					LOG_INFO("找到了子项 %s",String::fromStdWString((LPCTSTR)strCurrentSel).c_str());
+					//是子项，再判断是不是目录
+					if (m_ExtraItems[i].m_bIsFolder)
+					{
+						//这个是目录，不做任何事情
+						MessageBox(_T("请选择需要安装的系统。"));
+						return;
+					}
+					else
+					{
+						m_strGhostRestoreSrc = strFilePath;
+						POSITION pos = m_listPartions.GetFirstSelectedItemPosition();
+						if (pos == NULL)
+						{
+							MessageBox(_T("请选择将要把备份文件恢复到哪个分区。"));
+							return;
+						}
+						int nItem = m_listPartions.GetNextSelectedItem(pos);
+						CString strRestoreDestPartionName = m_listPartions.GetItemText(nItem,0);
+						CString strRestoreDestPartionIDs = m_listPartions.GetItemText(nItem,1);
+						ASSERT(nItem != -1 && strRestoreDestPartionIDs != _T(""));
+						//确认这个子项的类型
+						if (m_bIsWIMInstall)
+						{
+							//win7 8 10的安装。
+							LOG_INFO("准备win7 8 10的安装");
+							CDlgImagexRestore dlg;
+							LOG_INFO("id = %d",m_ExtraItems[i].m_iWimIndex);
+							LOG_INFO("目标分区名字 = %s",String::fromStdWString((LPCTSTR)strRestoreDestPartionName).c_str());
+							LOG_INFO("目标分区的ID = %s",String::fromStdWString((LPCTSTR)strRestoreDestPartionIDs).c_str());
+							LOG_INFO("来源主项 = %s",String::fromStdWString((LPCTSTR)m_ExtraItems[i].m_strSourceMain).c_str());
+							LOG_INFO("目标子项 = %s",String::fromStdWString((LPCTSTR)m_ExtraItems[i].m_strSourceSub).c_str());
+							dlg.SetOneKeyImageStoreCfg(m_ExtraItems[i].m_iWimIndex,strRestoreDestPartionName,strRestoreDestPartionIDs,m_ExtraItems[i].m_strSourceMain,m_ExtraItems[i].m_strSourceSub);
+							dlg.DoModal();
+							return;
+						}
+						else if (m_bIsISOWinXPInstall)
+						{
+							//xp原版的安装。
+							return;
+						}
+						else
+							return;
+					}
+				}
+			}
+			//不应在此，有错误发生了
+			MessageBox(_T("逻辑错误，没有在系统列表中当前的安装项。请重试。"));
 		}
 
 	}
@@ -665,9 +729,11 @@ void CUPEToolDlg::OnCbnSelchangeComboIsoghost()
 				switch(isoType){
 				case ISO_UNKNOW:
 					LOG_INFO("ISO类型为未知类型");
+					m_bIsWIMInstall = FALSE;
 					break;
 				case ISO_GHOST: 
 					{
+						m_bIsWIMInstall = FALSE;
 						LOG_INFO("ISO类型为GHOST类型");
 						//增加一行-----------------------
 						CExtraItem extMenu;
@@ -690,6 +756,7 @@ void CUPEToolDlg::OnCbnSelchangeComboIsoghost()
 				case ISO_WIM:
 					{
 						LOG_INFO("ISO类型为WIM类型");
+						m_bIsWIMInstall = TRUE;
 						vector<CExtraItem> vec;
 						if (FindWIM(wimOrGhostPath.c_str(), vec))
 						{
@@ -816,6 +883,9 @@ BOOL CUPEToolDlg::FindWIM( LPCWSTR WimFilePath ,vector<CExtraItem>& vec )
 					sub.m_strCmdLine = WimFilePath; sub.m_strCmdLine += _T(" -i "); sub.m_strCmdLine += index.c_str();
 					sub.m_strName = L"    -- ";
 					sub.m_strName += (index + L" " + DisplayName + L" " + strSize + L"GB").c_str();
+					sub.m_iWimIndex = String(String::fromStdWString(index)).toInteger();
+					sub.m_strSourceMain = WimFilePath;
+					sub.m_strSourceSub = (index + L" " + DisplayName + L" " + strSize + L"GB").c_str();
 					tempVec.push_back(sub);
 				}
 			}

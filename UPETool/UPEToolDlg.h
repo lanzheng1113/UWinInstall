@@ -31,6 +31,12 @@ public:
 	BOOL m_bIsGhost;
 	// 这个项对应的命令行参数(仅适用于非GHOST系统，即当m_bIsGhost==FALSE时才有效。)
 	CString m_strCmdLine;
+	// 系统子ID
+	int m_iWimIndex;
+	// 源ISO的路径，如“Z:\source\install.wim”
+	CString m_strSourceMain;
+	// 系统信息，如1 Windows 7 旗舰版[10.52GB]
+	CString m_strSourceSub;
 protected:
 private:
 };
@@ -88,6 +94,10 @@ public:
 	CString m_strImgFileSrce;
 	// 加载ISO后生成的子项
 	vector<CExtraItem> m_ExtraItems;
+	// 是否为Wim
+	BOOL m_bIsWIMInstall;
+	// 是不是XP系统的原版系统安装
+	BOOL m_bIsISOWinXPInstall;
 	afx_msg void OnMenuOpenPartion();
 	afx_msg void OnMenuFormatPartion();
 	CVirtualCDDriver m_virualCDD_Z;

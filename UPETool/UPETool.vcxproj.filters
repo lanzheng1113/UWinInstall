@@ -72,6 +72,9 @@
     <ClInclude Include="Markup.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="DlgImagexRestore.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="UPETool.cpp">
@@ -102,6 +105,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Markup.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgImagexRestore.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
