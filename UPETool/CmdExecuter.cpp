@@ -5,7 +5,7 @@
 #include "util/StringEx.h"
 #include "util/Logger.h"
 
-CCmdExecuter::CCmdExecuter(void)
+CExtractCmdExecuter::CExtractCmdExecuter(void)
 {
 	if (!InitEnv())
 	{
@@ -15,7 +15,7 @@ CCmdExecuter::CCmdExecuter(void)
 }
 
 
-CCmdExecuter::~CCmdExecuter(void)
+CExtractCmdExecuter::~CExtractCmdExecuter(void)
 {
 	if (!ClearEnv())
 	{
@@ -23,7 +23,7 @@ CCmdExecuter::~CCmdExecuter(void)
 	}
 }
 
-BOOL CCmdExecuter::InitEnv()
+BOOL CExtractCmdExecuter::InitEnv()
 {
 	WCHAR szTempPath[MAX_PATH] = {0};
 	GetTempPathW(MAX_PATH,szTempPath);
@@ -47,7 +47,7 @@ BOOL CCmdExecuter::InitEnv()
 	return TRUE;
 }
 
-BOOL CCmdExecuter::ClearEnv()
+BOOL CExtractCmdExecuter::ClearEnv()
 {
 	if (!m_pwd.empty())
 	{
@@ -56,7 +56,7 @@ BOOL CCmdExecuter::ClearEnv()
 	return FALSE;
 }
 
-BOOL CCmdExecuter::Extract( UINT ResourceId, LPCWSTR rcType, LPCWSTR szTargetName )
+BOOL CExtractCmdExecuter::Extract( UINT ResourceId, LPCWSTR rcType, LPCWSTR szTargetName )
 {
 	if (m_pwd.empty())
 	{
@@ -65,7 +65,7 @@ BOOL CCmdExecuter::Extract( UINT ResourceId, LPCWSTR rcType, LPCWSTR szTargetNam
 	return CUtil::ExtractResource(MAKEINTRESOURCE(ResourceId),rcType,(m_pwd + szTargetName).c_str(),NULL);
 }
 
-INT CCmdExecuter::ExecCommand( LPCWSTR szExe, LPCWSTR szCMD, LPCWSTR lpszStdOutFileName, BOOL IsChangeCurDir/*=TRUE*/, BOOL fHide /*= TRUE*/,BOOL bWaitUntilFinish /*= TRUE*/ )
+INT CExtractCmdExecuter::ExecCommand( LPCWSTR szExe, LPCWSTR szCMD, LPCWSTR lpszStdOutFileName, BOOL IsChangeCurDir/*=TRUE*/, BOOL fHide /*= TRUE*/,BOOL bWaitUntilFinish /*= TRUE*/ )
 {
 	//子进程启动信息设置
 	STARTUPINFOW si;  
@@ -123,7 +123,7 @@ INT CCmdExecuter::ExecCommand( LPCWSTR szExe, LPCWSTR szCMD, LPCWSTR lpszStdOutF
 	return 0;
 }
 
-INT CCmdExecuter::ExecCommandWithResultText( LPCWSTR szExe, LPCWSTR szCmd, OUT wstring& Result )
+INT CExtractCmdExecuter::ExecCommandWithResultText( LPCWSTR szExe, LPCWSTR szCmd, OUT wstring& Result )
 {
 	Result = L"";
 	WCHAR szTempPath[MAX_PATH] = {0};
@@ -187,4 +187,63 @@ INT CCmdExecuter::ExecCommandWithResultText( LPCWSTR szExe, LPCWSTR szCmd, OUT w
 	LOG_INFO("%s",String::fromStdWString(Result).c_str());
 	return dwExitCode;
 
+}
+
+INT CCmdExecuter::ExecCommandWithResultText( LPCWSTR szExe, LPCWSTR szCmd, OUT wstring& Result )
+{
+	//子进程启动信息设置
+	Result = L"";
+	WCHAR szTempPath[MAX_PATH] = {0};
+	GetTempPath(MAX_PATH,szTempPath);
+	WCHAR szTempFileName[MAX_PATH] = {0};
+	GetTempFileName(szTempPath,L"~l",0,szTempFileName);
+	//子进程启动信息设置
+	STARTUPINFOW si;  
+	si.cb = sizeof(STARTUPINFO);  
+	GetStartupInfoW(&si);    
+	si.wShowWindow = SW_HIDE;
+	si.dwFlags     = STARTF_USESHOWWINDOW;  
+	HANDLE hOutPutFile = 0;
+	if (szTempFileName[0])
+	{
+		si.dwFlags = si.dwFlags | STARTF_USESTDHANDLES;
+		SECURITY_ATTRIBUTES psa={sizeof(psa),NULL,TRUE};;  
+		psa.bInheritHandle=TRUE;
+		wstring wstr = szTempFileName;
+		hOutPutFile = CreateFile((LPCWSTR)wstr.c_str(), GENERIC_WRITE, 
+			FILE_SHARE_READ|FILE_SHARE_WRITE, &psa, 
+			CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);  
+		si.hStdOutput = hOutPutFile;
+		si.hStdError = hOutPutFile;  
+	}
+	// 运行子进程并等待其结束
+	PROCESS_INFORMATION pi;  
+	CString FullCmdLine = CString(szExe) + L" " + szCmd;
+	// 	MessageBox(NULL,FullCmdLine,NULL,MB_OK);
+	// 	return 0;
+	BOOL flag = CreateProcessW(NULL, (LPWSTR)(LPCWSTR)FullCmdLine, NULL, NULL, TRUE, NULL, NULL, NULL, &si, &pi);  
+	if (!flag)
+	{
+		return GetLastError();
+	}
+
+	WaitForSingleObject(pi.hProcess, INFINITE);  
+
+	DWORD dwExitCode = 0;
+	flag = GetExitCodeProcess(pi.hProcess, &dwExitCode);
+	CloseHandle(pi.hProcess);
+	CloseHandle(pi.hThread);
+	if (hOutPutFile)
+	{
+		CloseHandle(hOutPutFile);
+	}
+	FileReader fr(String::fromStdWString(szTempFileName));
+	if (fr.open())
+	{
+		std::string str = fr.read();
+		Result = String(str).toStdWString();
+	}
+	LOG_INFO("执行命令%s的结果为：",String::fromStdWString(wstring(szExe)+wstring(szCmd)).c_str());
+	LOG_INFO("%s",String::fromStdWString(Result).c_str());
+	return dwExitCode;
 }

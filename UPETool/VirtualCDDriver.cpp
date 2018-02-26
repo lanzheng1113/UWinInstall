@@ -16,7 +16,7 @@ CVirtualCDDriver::~CVirtualCDDriver(void)
 	
 }
 
-BOOL CVirtualCDDriver::Install(CCmdExecuter& cmder)
+BOOL CVirtualCDDriver::Install(CExtractCmdExecuter& cmder)
 {
 	m_strCurIso = L"";
 	wstring wstrResult;
@@ -26,7 +26,7 @@ BOOL CVirtualCDDriver::Install(CCmdExecuter& cmder)
 	return 0 == cmder.ExecCommandWithResultText(L"isocmd.exe", L"-change 1 Z:" ,wstrResult);
 }
 
-BOOL CVirtualCDDriver::Mount( const wchar_t* pszIsoPath, CCmdExecuter& cmder )
+BOOL CVirtualCDDriver::Mount( const wchar_t* pszIsoPath, CExtractCmdExecuter& cmder )
 {
 	m_strCurIso = pszIsoPath;
 	wstring wstr = L"-infile -mount Z: \"";
@@ -36,14 +36,14 @@ BOOL CVirtualCDDriver::Mount( const wchar_t* pszIsoPath, CCmdExecuter& cmder )
 	return 0 == cmder.ExecCommandWithResultText(L"isocmd.exe",wstr.c_str(),strRet);
 }
 
-BOOL CVirtualCDDriver::EJect( CCmdExecuter& cmder )
+BOOL CVirtualCDDriver::EJect( CExtractCmdExecuter& cmder )
 {
 	m_strCurIso = L"";
 	wstring strRet;
 	return 0 == cmder.ExecCommandWithResultText(L"isocmd.exe",L"-eject Z:",strRet);
 }
 
-BOOL CVirtualCDDriver::Remove( CCmdExecuter& cmder )
+BOOL CVirtualCDDriver::Remove( CExtractCmdExecuter& cmder )
 {
 	m_strCurIso = L"";
 	wstring strRet;

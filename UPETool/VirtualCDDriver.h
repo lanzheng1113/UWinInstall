@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 using std::wstring;
-class CCmdExecuter;
+class CExtractCmdExecuter;
 #include "Common.h"
 #include <vector>
 using std::vector;
@@ -12,10 +12,10 @@ public:
 	CVirtualCDDriver(void);
 	~CVirtualCDDriver(void);
 public:
-	BOOL Install(CCmdExecuter& cmder);
-	BOOL Mount(const wchar_t* pszIsoPath, CCmdExecuter& cmder);
-	BOOL EJect(CCmdExecuter& cmder);
-	BOOL Remove(CCmdExecuter& cmder);
+	BOOL Install(CExtractCmdExecuter& cmder);
+	BOOL Mount(const wchar_t* pszIsoPath, CExtractCmdExecuter& cmder);
+	BOOL EJect(CExtractCmdExecuter& cmder);
+	BOOL Remove(CExtractCmdExecuter& cmder);
 	wstring GetCurLoadedISO() const { return m_strCurIso; }
 	ISOType GetIsoType(wstring& WimOrGhoPath);
 private:

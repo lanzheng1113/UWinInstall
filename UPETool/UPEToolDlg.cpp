@@ -79,7 +79,7 @@ void __cdecl ThreadFunBackupGhost(void* ThreadParam)
 	CString strGhoFilePath = _T("\"");
 	strGhoFilePath += pMainDlg->m_strGhoBackupFilePath;
 	strGhoFilePath += _T("\"");
-	CCmdExecuter shell;
+	CExtractCmdExecuter shell;
 	shell.Extract(IDR_BIN_ghopwd_exe,L"BIN",L"ghopwd.exe");
 	shell.Extract(IDR_BIN_Ghost32_exe,L"BIN",L"Ghost32.exe");
 	INT iRet = shell.ExecCommand(L"ghopwd.exe",(LPCWSTR)strGhoFilePath);
@@ -111,7 +111,7 @@ void __cdecl ThreadFunRestoreGho(void* ThreadParam)
 	CString strGhoFilePath = _T("\"");
 	strGhoFilePath += pDlg->m_strGhostRestoreSrc;
 	strGhoFilePath += _T(":1\"");
-	CCmdExecuter shell;
+	CExtractCmdExecuter shell;
 	shell.Extract(IDR_BIN_ghopwd_exe,L"BIN",L"ghopwd.exe");
 	shell.Extract(IDR_BIN_Ghost32_exe,L"BIN",L"Ghost32.exe");
 	INT iRet = shell.ExecCommand(L"ghopwd.exe",(LPCWSTR)strGhoFilePath);
@@ -667,7 +667,7 @@ void CUPEToolDlg::OnCbnSelchangeComboIsoghost()
 			LOG_INFO("载入ISO：");
 			string astrFilePath = String::fromStdWString((LPCTSTR)strCurrentSel);
 			LOG_INFO(astrFilePath.c_str());
-			CCmdExecuter Executer;
+			CExtractCmdExecuter Executer;
 			
 			Executer.Extract(IDR_BIN_isocmd_exe,L"BIN",L"isocmd.exe");
 			Executer.Extract(IDR_BIN_ISODrive_sys,L"BIN",L"ISODrive.sys");
@@ -799,7 +799,7 @@ using std::ifstream;
 using std::deque;
 BOOL CUPEToolDlg::FindWIM( LPCWSTR WimFilePath ,vector<CExtraItem>& vec )
 {
-	CCmdExecuter execter;
+	CExtractCmdExecuter execter;
 	execter.Extract(IDR_BIN_imagex_exe,L"BIN",L"imagex.exe");
 	wstring wstr = L"/info ";
 	wstr += WimFilePath;
@@ -1005,7 +1005,7 @@ void CUPEToolDlg::OnDestroy()
 	CDialogEx::OnDestroy();
 
 	// TODO: 在此处添加消息处理程序代码
-	CCmdExecuter Executer;
+	CExtractCmdExecuter Executer;
 
 	Executer.Extract(IDR_BIN_isocmd_exe,L"BIN",L"isocmd.exe");
 	Executer.Extract(IDR_BIN_ISODrive_sys,L"BIN",L"ISODrive.sys");

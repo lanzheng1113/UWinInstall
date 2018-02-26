@@ -101,7 +101,7 @@ void __cdecl ThreadFunBackupImgex(void* ThreadParam)
 	strImgFilePathDest += pDlg->m_strNameDest;
 	strImgFilePathDest += _T("\"");
 
-	CCmdExecuter shell;
+	CExtractCmdExecuter shell;
 	shell.Extract(IDR_BIN_imagex_exe,L"BIN",L"imagex.exe");
 	CString strCmdLine = L"/capture ";
 

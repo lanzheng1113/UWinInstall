@@ -13,6 +13,14 @@ protected:
 private:
 
 };
+
+typedef enum
+{
+	EFT_NTFS,
+	EFT_FAT32,
+	EFT_USERDEFINE
+}ETypeFormat;
+
 // CDlgImagexRestore 对话框
 
 class CDlgImagexRestore : public CDialogEx
@@ -28,10 +36,12 @@ public:
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
-
+	static UINT ThreadFunDoImagexRestore(LPVOID lpThreadParam);
 	DECLARE_MESSAGE_MAP()
 private:
 	COneKeyImageRestoreTaskCfg m_RestoreCfg;
+	UINT DoImagexRestoreInternal();
+	void PostUnexpectedError(UINT ErrorCode);
 public:
 	void SetOneKeyImageStoreCfg(int iWimIndex,
 		const CString& strRestoreDestPartionName,
@@ -57,6 +67,7 @@ public:
 	CString m_strTimeUsed;
 	afx_msg void OnBnClickedOk();
 	CComboBox m_ComboxFormatType;
+	ETypeFormat m_eFormatType;
 	CComboBox m_ComboxBootPartion;
 	// 控件变量 对应分区编号控件
 	CString m_strDestPartionId;

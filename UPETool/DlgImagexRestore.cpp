@@ -6,7 +6,10 @@
 #include "DlgImagexRestore.h"
 #include "afxdialogex.h"
 #include "PartionInfo.h"
-
+#include "UserMsg.h"
+#include "CmdExecuter.h"
+#include "util/StringEx.h"
+#include "util/Logger.h"
 // CDlgImagexRestore 对话框
 
 IMPLEMENT_DYNAMIC(CDlgImagexRestore, CDialogEx)
@@ -124,6 +127,12 @@ void CDlgImagexRestore::OnBnClickedOk()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	// CDialogEx::OnOK();
+	// 注：Combox的项目设置与ETypeFormat数值的顺序相同。
+	if (m_eFormatType == -1)
+	{
+		MessageBox(_T("格式化类型错误，请重试"));
+		return;
+	}
 }
 
 
@@ -133,5 +142,53 @@ BOOL CDlgImagexRestore::PreTranslateMessage(MSG* pMsg)
 	if(pMsg->message == WM_KEYDOWN && (pMsg->wParam == VK_ESCAPE) || (pMsg->wParam == VK_RETURN))
 		return TRUE;
 	return CDialogEx::PreTranslateMessage(pMsg);
+}
+
+UINT CDlgImagexRestore::ThreadFunDoImagexRestore( LPVOID lpThreadParam )
+{
+	CDlgImagexRestore* pDlg = (CDlgImagexRestore*)lpThreadParam;
+	return pDlg->DoImagexRestoreInternal();
+}
+
+UINT CDlgImagexRestore::DoImagexRestoreInternal()
+{
+	if (m_bIsFormat)
+	{
+		int FmtSel = m_ComboxFormatType.GetCurSel();
+		if (FmtSel == -1)
+		{
+			PostUnexpectedError(1);
+			return 1;
+		}
+		m_eFormatType = (ETypeFormat)FmtSel;
+		//格式化
+		if (m_eFormatType == EFT_NTFS)
+		{
+			LOG_INFO("用户选择了NTFS格式化");
+			// X:\\Windows\\system32\\cmd.exe /c format.com /q /x /y C: /fs:NTFS
+			CString strLbText;
+			m_ComboxFormatType.GetLBText(FmtSel,strLbText);
+			if (strLbText == "")
+			{
+				LOG_INFO("发生逻辑错误，当前选中的格式化方式未定义");
+				PostUnexpectedError(2);
+				return 2;
+			}
+			CCmdExecuter exec;
+			std::wstring Result;
+			exec.ExecCommandWithResultText(NULL,L"X:\\Windows\\system32\\cmd.exe /c format.com /q /x /y C: /fs:NTFS",Result);
+			LOG_INFO("执行格式化的结果为：%s",String::fromStdWString(Result).c_str());
+		}else if (m_eFormatType == EFT_FAT32){
+
+		}else{
+			LOG_WARN("客户选中了自定义模式，不做任何格式化。");
+		}
+	}
+	return (DWORD)-1;
+}
+
+void CDlgImagexRestore::PostUnexpectedError( UINT ErrorCode )
+{
+	PostMessage(WM_UNEXCEPT_ERROR,0,(LPARAM)ErrorCode);
 }
 
