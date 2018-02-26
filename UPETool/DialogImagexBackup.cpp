@@ -170,3 +170,12 @@ LRESULT CDialogImagexBackup::OnBackupEnd( WPARAM wParam, LPARAM lParam )
 	UpdateData(FALSE);
 	return 0;
 }
+
+
+BOOL CDialogImagexBackup::PreTranslateMessage(MSG* pMsg)
+{
+	// TODO: 在此添加专用代码和/或调用基类
+	if(pMsg->message == WM_KEYDOWN && (pMsg->wParam == VK_ESCAPE) || (pMsg->wParam == VK_RETURN))
+		return TRUE;
+	return CDialogEx::PreTranslateMessage(pMsg);
+}

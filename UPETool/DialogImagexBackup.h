@@ -53,4 +53,5 @@ public:
 	// È·¶¨°´Å¥
 	CButton m_btnOK;
 	CString m_state;
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 };

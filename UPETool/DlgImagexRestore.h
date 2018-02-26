@@ -61,4 +61,5 @@ public:
 	// 控件变量 对应分区编号控件
 	CString m_strDestPartionId;
 	int m_iWimIndex;
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 };

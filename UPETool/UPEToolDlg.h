@@ -109,4 +109,5 @@ public:
 	afx_msg void OnCbnSelchangeComboIsoghost();
 	afx_msg void OnBnClickedCancel();
 	afx_msg void OnDestroy();
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 };
