@@ -192,6 +192,13 @@ INT CExtractCmdExecuter::ExecCommandWithResultText( LPCWSTR szExe, LPCWSTR szCmd
 INT CCmdExecuter::ExecCommandWithResultText( LPCWSTR szExe, LPCWSTR szCmd, OUT wstring& Result )
 {
 	//子进程启动信息设置
+	wstring wstrEXE;
+	if (szExe)
+	{
+		wstrEXE = szExe;
+	}else{
+		wstrEXE = L"";
+	}
 	Result = L"";
 	WCHAR szTempPath[MAX_PATH] = {0};
 	GetTempPath(MAX_PATH,szTempPath);
@@ -218,12 +225,13 @@ INT CCmdExecuter::ExecCommandWithResultText( LPCWSTR szExe, LPCWSTR szCmd, OUT w
 	}
 	// 运行子进程并等待其结束
 	PROCESS_INFORMATION pi;  
-	CString FullCmdLine = CString(szExe) + L" " + szCmd;
+	CString FullCmdLine = CString(wstrEXE.c_str()) + L" " + szCmd;
 	// 	MessageBox(NULL,FullCmdLine,NULL,MB_OK);
 	// 	return 0;
 	BOOL flag = CreateProcessW(NULL, (LPWSTR)(LPCWSTR)FullCmdLine, NULL, NULL, TRUE, NULL, NULL, NULL, &si, &pi);  
 	if (!flag)
 	{
+		LOG_INFO("执行命令%s时发生了错误，错误ID为%d：",String::fromStdWString((LPCWSTR)FullCmdLine).c_str(),GetLastError());
 		return GetLastError();
 	}
 
@@ -243,7 +251,7 @@ INT CCmdExecuter::ExecCommandWithResultText( LPCWSTR szExe, LPCWSTR szCmd, OUT w
 		std::string str = fr.read();
 		Result = String(str).toStdWString();
 	}
-	LOG_INFO("执行命令%s的结果为：",String::fromStdWString(wstring(szExe)+wstring(szCmd)).c_str());
+	LOG_INFO("执行命令%s的结果为：",String::fromStdWString(wstrEXE+wstring(szCmd)).c_str());
 	LOG_INFO("%s",String::fromStdWString(Result).c_str());
 	return dwExitCode;
 }

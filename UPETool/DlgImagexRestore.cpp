@@ -59,6 +59,7 @@ void CDlgImagexRestore::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(CDlgImagexRestore, CDialogEx)
 	ON_BN_CLICKED(IDOK, &CDlgImagexRestore::OnBnClickedOk)
+	ON_MESSAGE(WM_UNEXCEPT_IMAGEX_RESTORE_ERROR,&CDlgImagexRestore::OnUnexpectError)
 END_MESSAGE_MAP()
 
 void CDlgImagexRestore::SetOneKeyImageStoreCfg( int iWimIndex, const CString& strRestoreDestPartionName, const CString& strRestoreDestPartionIDs, const CString& strSourceMain, const CString& strSourceSub )
@@ -133,6 +134,8 @@ void CDlgImagexRestore::OnBnClickedOk()
 		MessageBox(_T("格式化类型错误，请重试"));
 		return;
 	}
+	GetDlgItem(IDOK)->EnableWindow(FALSE);
+	AfxBeginThread(ThreadFunDoImagexRestore,this);
 }
 
 
@@ -147,7 +150,9 @@ BOOL CDlgImagexRestore::PreTranslateMessage(MSG* pMsg)
 UINT CDlgImagexRestore::ThreadFunDoImagexRestore( LPVOID lpThreadParam )
 {
 	CDlgImagexRestore* pDlg = (CDlgImagexRestore*)lpThreadParam;
-	return pDlg->DoImagexRestoreInternal();
+	UINT retCode = pDlg->DoImagexRestoreInternal();
+	pDlg->GetDlgItem(IDOK)->EnableWindow(TRUE);
+	return retCode;
 }
 
 UINT CDlgImagexRestore::DoImagexRestoreInternal()
@@ -157,31 +162,38 @@ UINT CDlgImagexRestore::DoImagexRestoreInternal()
 		int FmtSel = m_ComboxFormatType.GetCurSel();
 		if (FmtSel == -1)
 		{
+			LOG_INFO("发生逻辑错误，当前选中的格式化方式未定义");
 			PostUnexpectedError(1);
 			return 1;
 		}
 		m_eFormatType = (ETypeFormat)FmtSel;
 		//格式化
-		if (m_eFormatType == EFT_NTFS)
+		ASSERT(EFT_NTFS == m_eFormatType || EFT_USERDEFINE == m_eFormatType || EFT_FAT32 == m_eFormatType);
+		if (m_eFormatType == EFT_USERDEFINE)
 		{
-			LOG_INFO("用户选择了NTFS格式化");
-			// X:\\Windows\\system32\\cmd.exe /c format.com /q /x /y C: /fs:NTFS
-			CString strLbText;
-			m_ComboxFormatType.GetLBText(FmtSel,strLbText);
-			if (strLbText == "")
+			LOG_WARN("客户选中了自定义模式，不做任何格式化。");
+		}
+		else
+		{
+			ASSERT(m_RestoreCfg.m_strRestoreDestPartionName.GetLength() >= 2); //C:
+			CString TargetPartion = m_RestoreCfg.m_strRestoreDestPartionName.Left(2);
+			std::wstring wstrCmdLine = L"/c format.com /q /x /y ";
+			wstrCmdLine += (LPCWSTR)TargetPartion;
+			if (m_eFormatType == EFT_NTFS)
 			{
-				LOG_INFO("发生逻辑错误，当前选中的格式化方式未定义");
-				PostUnexpectedError(2);
-				return 2;
+				LOG_INFO("用户选择了NTFS格式化");
+				wstrCmdLine += L" /fs:NTFS";
 			}
+			else if (m_eFormatType == EFT_FAT32)
+			{
+				LOG_INFO("用户选择了FAT32格式化");
+				wstrCmdLine += L" /fs:FAT32";
+			}
+			// X:\\Windows\\system32\\cmd.exe /c format.com /q /x /y C: /fs:NTFS
 			CCmdExecuter exec;
 			std::wstring Result;
-			exec.ExecCommandWithResultText(NULL,L"X:\\Windows\\system32\\cmd.exe /c format.com /q /x /y C: /fs:NTFS",Result);
-			LOG_INFO("执行格式化的结果为：%s",String::fromStdWString(Result).c_str());
-		}else if (m_eFormatType == EFT_FAT32){
-
-		}else{
-			LOG_WARN("客户选中了自定义模式，不做任何格式化。");
+			INT cmdR = exec.ExecCommandWithResultText(L"X:\\Windows\\system32\\cmd.exe",wstrCmdLine.c_str(),Result);
+			LOG_INFO("执行格式化的结果为：%d",cmdR);
 		}
 	}
 	return (DWORD)-1;
@@ -189,6 +201,15 @@ UINT CDlgImagexRestore::DoImagexRestoreInternal()
 
 void CDlgImagexRestore::PostUnexpectedError( UINT ErrorCode )
 {
-	PostMessage(WM_UNEXCEPT_ERROR,0,(LPARAM)ErrorCode);
+	PostMessage(WM_UNEXCEPT_IMAGEX_RESTORE_ERROR,0,(LPARAM)ErrorCode);
+}
+
+LRESULT CDlgImagexRestore::OnUnexpectError( WPARAM ,LPARAM lParam )
+{
+	// TODO : 在这里处理错误。lParam是错误号，通过查找WM_UNEXCEPT_IMAGEX_RESTORE_ERROR的引用可以知道哪里发生了错误。
+	if (lParam == 0)
+	{
+	}
+	return 0;
 }
 

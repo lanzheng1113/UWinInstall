@@ -43,6 +43,7 @@ private:
 	UINT DoImagexRestoreInternal();
 	void PostUnexpectedError(UINT ErrorCode);
 public:
+	LRESULT OnUnexpectError(WPARAM ,LPARAM lParam);
 	void SetOneKeyImageStoreCfg(int iWimIndex,
 		const CString& strRestoreDestPartionName,
 		const CString& strRestoreDestPartionIDs,
