@@ -10,6 +10,7 @@ using std::wstringstream;
 using std::ofstream;
 using std::runtime_error;
 #include <ctime>
+#include "util/Logger.h"
 
 CUtil::CUtil(void)
 {
@@ -128,86 +129,93 @@ std::wstring CUtil::ErrorMessageW(LPWSTR lpszFunction)
 
 vector<wstring> CUtil::FindIsoGhoFiles( const wstring& root )
 {
-	vector<wstring> findToRet;
 	return FindIsoGhoFileInternal(root,0);
 }
 
 vector<wstring> CUtil::FindIsoGhoFileInternal( const wstring& root,int FolderLevel )
 {
+	LOG_DEBUG("查找层数 level (%d)",FolderLevel);
 	vector<wstring> ret;
 	if (FolderLevel >= 2)
 	{
 		return ret;
 	}
 	WIN32_FIND_DATA FindFileData;
-	WCHAR PathToSearchInto [MAX_PATH] = {0};
+	memset(&FindFileData,0,sizeof(WIN32_FIND_DATA));
+	WCHAR PathToSearchInto[MAX_PATH] = {0};
 	wcscpy(PathToSearchInto,root.c_str());
 	PathAddBackslash(PathToSearchInto);
-	wcscat(PathToSearchInto,L"*.*");
+	wcscat(PathToSearchInto,L"*");
+	//LOG_DEBUG("查找ISO/Ghost (2)");
+	LOG_DEBUG("查找目标 %s",String::fromStdWString(PathToSearchInto).c_str());
 	HANDLE hFind = FindFirstFile(PathToSearchInto,&FindFileData); // find the first file
 	if(hFind == INVALID_HANDLE_VALUE)
 	{
+		LOG_ERROR("在执行FindFirstFile时发生了错误:%d",GetLastError());
 		return ret;
 	}
-
-	bool bSearch = true;
-	while(bSearch) // until we finds an entry
+	//LOG_DEBUG("查找ISO/Ghost (3)");
+	do // until we finds an entry
 	{
-		if(FindNextFile(hFind,&FindFileData))
+		LOG_DEBUG("查找文件");
+		// Don't care about . and ..
+		//if(IsDots(FindFileData.cFileName))
+		if ((_tcscmp(FindFileData.cFileName, _T(".")) == 0) ||
+			(_tcscmp(FindFileData.cFileName, _T("..")) == 0))
+			continue;
+
+		// We have found a directory
+		if((FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 		{
-			// Don't care about . and ..
-			//if(IsDots(FindFileData.cFileName))
-			if ((_tcscmp(FindFileData.cFileName, _T(".")) == 0) ||
-				(_tcscmp(FindFileData.cFileName, _T("..")) == 0))
+			wstring wstrTemp = FindFileData.cFileName;
+			LOG_DEBUG("目录：%s",String::fromStdWString(wstrTemp).c_str());
+			transform(wstrTemp.begin(),wstrTemp.end(),wstrTemp.begin(),towlower);
+			if (wstrTemp == L"$recycle.bin")
+			{
+				LOG_DEBUG("跳过回收站的文件");
 				continue;
-
-			// We have found a directory
-			if((FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
-			{
-				WCHAR RelativePathNewDirFound[MAX_PATH] = {0};
-				wcscpy(RelativePathNewDirFound, root.c_str());
-				PathAddBackslash(RelativePathNewDirFound);
-				wcscat(RelativePathNewDirFound, FindFileData.cFileName);
-
-				// Recursive call with the new directory found
-				vector<wstring> recursiveRet;
-				recursiveRet = FindIsoGhoFileInternal(RelativePathNewDirFound, FolderLevel+1);
-				if (!recursiveRet.empty())
-				{
-					ret.insert(ret.end(),   recursiveRet.begin(),   recursiveRet.end());   
-				}
 			}
-			// We have found a file
-			else
+			WCHAR RelativePathNewDirFound[MAX_PATH] = {0};
+			wcscpy(RelativePathNewDirFound, root.c_str());
+			PathAddBackslash(RelativePathNewDirFound);
+			wcscat(RelativePathNewDirFound, FindFileData.cFileName);
+			// Recursive call with the new directory found
+			vector<wstring> recursiveRet;
+			recursiveRet = FindIsoGhoFileInternal(RelativePathNewDirFound, FolderLevel+1);
+			if (!recursiveRet.empty())
 			{
-				wstring strCompare = FindFileData.cFileName;
-				transform(strCompare.begin(), strCompare.end(), strCompare.begin(), towlower);
-				if (CUtil::isStringEndsWith(strCompare,L".gho") || CUtil::isStringEndsWith(strCompare,L".iso"))
-				{
-					if (root.find(L"$Recycle")==-1)
-					{
-						TCHAR AbsolutePathOfNewFile[MAX_PATH] = {0};
-						wcscpy(AbsolutePathOfNewFile,root.c_str());
-						PathAddBackslash(AbsolutePathOfNewFile);
-						wcscat(AbsolutePathOfNewFile,FindFileData.cFileName);
-						ret.push_back(AbsolutePathOfNewFile);
-					}
-				}
-			}
-
-		}//FindNextFile
-		else
-		{
-			if(GetLastError() == ERROR_NO_MORE_FILES) // no more files there
-				bSearch = false;
-			else 
-			{
-				// some error occured, close the handle and return FALSE
-				FindClose(hFind);
-				return ret;
+				ret.insert(ret.end(),   recursiveRet.begin(),   recursiveRet.end());   
 			}
 		}
-	}//while
+		else
+		{
+			// We have found a file
+			wstring strCompare = FindFileData.cFileName;
+			LOG_DEBUG("查找ISO/Ghost (%s)",String::fromStdWString(strCompare).c_str());
+			transform(strCompare.begin(), strCompare.end(), strCompare.begin(), towlower);
+			if (CUtil::isStringEndsWith(strCompare,L".gho") || CUtil::isStringEndsWith(strCompare,L".iso"))
+			{
+				LOG_DEBUG("We Get one ,OK we need this iso");
+				TCHAR AbsolutePathOfNewFile[MAX_PATH] = {0};
+				wcscpy(AbsolutePathOfNewFile,root.c_str());
+				PathAddBackslash(AbsolutePathOfNewFile);
+				wcscat(AbsolutePathOfNewFile,FindFileData.cFileName);
+				ret.push_back(AbsolutePathOfNewFile);
+				LOG_DEBUG("找到了一个GHO/ISO文件%s",String::fromStdWString(AbsolutePathOfNewFile).c_str());
+			}else{
+				LOG_DEBUG("不需要");
+			}
+		}
+		
+	}while (FindNextFile(hFind,&FindFileData));// do - while
+	
+	if(GetLastError() != ERROR_NO_MORE_FILES) // no more files there
+	{
+		// some error occured, close the handle and return FALSE
+		LOG_DEBUG("查找时FindNextFile发生错误 %d",GetLastError());
+		FindClose(hFind);
+		return ret;
+	}
 
 	FindClose(hFind); // closing file handle
 	return ret;  

@@ -75,6 +75,9 @@
     <ClInclude Include="DlgImagexRestore.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="InterfaceCallBack.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="UPETool.cpp">

@@ -62,7 +62,12 @@ END_MESSAGE_MAP()
 // CUPEToolDlg 消息处理程序
 void __cdecl ThreadFunFindIsoGhostFile(void* ThreadParam)
 {
+	LOG_DEBUG("启动查找ISO/GHOST文件的线程");
 	CUPEToolDlg* hMainDlg = (CUPEToolDlg*)ThreadParam;
+	for (int i=0; i!=hMainDlg->m_arr.size(); i++)
+	{
+		LOG_DEBUG("需要查找 %s",String::fromStdWString(hMainDlg->m_arr[i].m_PartionName).c_str());
+	}
 	for (int i = 0; i!= hMainDlg->m_arr.size(); i++)
 	{
 		vector<wstring> vect = CUtil::FindIsoGhoFiles(hMainDlg->m_arr[i].m_PartionName);
@@ -178,6 +183,7 @@ BOOL CUPEToolDlg::OnInitDialog()
 	m_comboIsoGho.EnableWindow(FALSE);
 	GetDlgItem(IDC_EDIT_GHOST)->ShowWindow(SW_HIDE);
 	GetDlgItem(IDC_EDIT_IMAGEX)->ShowWindow(SW_HIDE);
+	LOG_DEBUG("开始寻找iso和gho文件");
 	_beginthread(ThreadFunFindIsoGhostFile,0,(void*)this);
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -699,7 +705,6 @@ void CUPEToolDlg::OnCbnSelchangeComboIsoghost()
 					}
 				}
 			}
-			
 			
 			if (PathFileExists(L"Z:\\"))
 			{

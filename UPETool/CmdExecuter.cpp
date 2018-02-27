@@ -65,7 +65,8 @@ BOOL CExtractCmdExecuter::Extract( UINT ResourceId, LPCWSTR rcType, LPCWSTR szTa
 	return CUtil::ExtractResource(MAKEINTRESOURCE(ResourceId),rcType,(m_pwd + szTargetName).c_str(),NULL);
 }
 
-INT CExtractCmdExecuter::ExecCommand( LPCWSTR szExe, LPCWSTR szCMD, LPCWSTR lpszStdOutFileName, BOOL IsChangeCurDir/*=TRUE*/, BOOL fHide /*= TRUE*/,BOOL bWaitUntilFinish /*= TRUE*/ )
+INT CExtractCmdExecuter::ExecCommand( LPCWSTR szExe, LPCWSTR szCMD, LPCWSTR lpszStdOutFileName, 
+	BOOL IsChangeCurDir/*=TRUE*/, BOOL fHide /*= TRUE*/,BOOL bWaitUntilFinish /*= TRUE*/,ICallBackRestore* cbk /*=NULL*/ )
 {
 	//子进程启动信息设置
 	STARTUPINFOW si;  
@@ -95,24 +96,54 @@ INT CExtractCmdExecuter::ExecCommand( LPCWSTR szExe, LPCWSTR szCMD, LPCWSTR lpsz
 		GetCurrentDirectoryW(MAX_PATH,szCurPath);
 		SetCurrentDirectoryW(m_pwd.c_str());
 	}
-	CString FullCmdLine = CString(szExe) + L" " + szCMD;
+	CString FullCmdLine;
+	if (!(szExe == NULL || CString(szExe) == ""))
+	{
+		FullCmdLine = CString(szExe) + L" " + szCMD;
+	}else{
+		FullCmdLine = szCMD;
+	}
 // 	MessageBox(NULL,FullCmdLine,NULL,MB_OK);
 // 	return 0;
 	BOOL flag = CreateProcessW(NULL, (LPWSTR)(LPCWSTR)FullCmdLine, NULL, NULL, TRUE, NULL, NULL, NULL, &si, &pi);  
 	if (!flag)
 	{
 		SetCurrentDirectoryW(szCurPath);
+		LOG_INFO("执行命令%s时发生了错误，错误ID为%d：",String::fromStdWString((LPCWSTR)FullCmdLine).c_str(),GetLastError());
 		return GetLastError();
 	}
 	if (bWaitUntilFinish)
 	{
-		WaitForSingleObject(pi.hProcess, INFINITE);  
+		if (cbk && lpszStdOutFileName)
+		{
+			int x = 0;
+			while (WaitForSingleObject(pi.hProcess, 1000) == WAIT_TIMEOUT)
+			{
+				FileReader fr(String::fromStdWString(lpszStdOutFileName));
+				fr.open();
+				std::string str = fr.read();
+				cbk->ExecCmdCallBack(str);
+				fr.close();
+				//LOG_DEBUG("%d\n%s",x++,str.c_str());
+			}
+			FileReader fr(String::fromStdWString(lpszStdOutFileName));
+			fr.open();
+			std::string str = fr.read();
+			cbk->ExecCmdCallBack(str);
+			fr.close();
+			//LOG_DEBUG("%d\n%s",x++,str.c_str());
+		}else{
+			WaitForSingleObject(pi.hProcess, INFINITE);  
+		}
+		
 		// 获取子进程返回值,在等待期间其他线程可以打开lpszStdOutFileName读取内容。例如进度之类的东西。
 		DWORD dwExitCode = 0;
 		flag = GetExitCodeProcess(pi.hProcess, &dwExitCode);
 		CloseHandle(pi.hProcess);
 		CloseHandle(pi.hThread);
 		SetCurrentDirectoryW(szCurPath);
+		//LOG_INFO("执行命令%s的结果为：",String::fromStdWString((LPCTSTR)FullCmdLine).c_str());
+		//LOG_INFO("%s",String::fromStdWString(Result).c_str());
 		return dwExitCode;
 	}
 	SetCurrentDirectoryW(szCurPath);
@@ -163,6 +194,7 @@ INT CExtractCmdExecuter::ExecCommandWithResultText( LPCWSTR szExe, LPCWSTR szCmd
 	if (!flag)
 	{
 		SetCurrentDirectoryW(szCurPath);
+		LOG_INFO("执行命令%s时发生了错误，错误ID为%d：",String::fromStdWString((LPCWSTR)FullCmdLine).c_str(),GetLastError());
 		return GetLastError();
 	}
 	

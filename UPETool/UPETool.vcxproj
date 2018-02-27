@@ -52,6 +52,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>D:\src_history\work\WZTKCommon2010\include;$(BOOST_163_2010)</AdditionalIncludeDirectories>
+      <ExceptionHandling>Async</ExceptionHandling>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -80,6 +81,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>D:\src_history\work\WZTKCommon2010\include;$(BOOST_163_2010)</AdditionalIncludeDirectories>
+      <ExceptionHandling>Async</ExceptionHandling>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -117,6 +119,7 @@
     <ClInclude Include="DialogImagexBackup.h" />
     <ClInclude Include="DlgImagexRestore.h" />
     <ClInclude Include="DriverInfo.h" />
+    <ClInclude Include="InterfaceCallBack.h" />
     <ClInclude Include="Markup.h" />
     <ClInclude Include="PartionInfo.h" />
     <ClInclude Include="Resource.h" />

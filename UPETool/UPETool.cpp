@@ -78,7 +78,12 @@ BOOL CUPEToolApp::InitInstance()
 	DateTime dt;
 	stringstream ss;
 	ss << dt.getYear() << dt.getMonth() << dt.getDay() << dt.getHour() << dt.getMinute() << dt.getSecond() << ".txt";
-	Logger::getInstance()->setLogFileName(ss.str());
+	if (PathFileExistsW(L"X:\\temp"))
+	{
+		Logger::getInstance()->setLogFileName(std::string("X:\\temp\\") + ss.str());
+	}
+	else
+		Logger::getInstance()->setLogFileName(ss.str());
 	
 	INT_PTR nResponse = dlg.DoModal();
 	if (nResponse == IDOK)
