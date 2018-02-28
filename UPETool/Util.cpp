@@ -134,7 +134,7 @@ vector<wstring> CUtil::FindIsoGhoFiles( const wstring& root )
 
 vector<wstring> CUtil::FindIsoGhoFileInternal( const wstring& root,int FolderLevel )
 {
-	LOG_DEBUG("查找层数 level (%d)",FolderLevel);
+	//LOG_DEBUG("查找层数 level (%d)",FolderLevel);
 	vector<wstring> ret;
 	if (FolderLevel >= 2)
 	{
@@ -147,7 +147,7 @@ vector<wstring> CUtil::FindIsoGhoFileInternal( const wstring& root,int FolderLev
 	PathAddBackslash(PathToSearchInto);
 	wcscat(PathToSearchInto,L"*");
 	//LOG_DEBUG("查找ISO/Ghost (2)");
-	LOG_DEBUG("查找目标 %s",String::fromStdWString(PathToSearchInto).c_str());
+	//LOG_DEBUG("查找目标 %s",String::fromStdWString(PathToSearchInto).c_str());
 	HANDLE hFind = FindFirstFile(PathToSearchInto,&FindFileData); // find the first file
 	if(hFind == INVALID_HANDLE_VALUE)
 	{
@@ -157,7 +157,7 @@ vector<wstring> CUtil::FindIsoGhoFileInternal( const wstring& root,int FolderLev
 	//LOG_DEBUG("查找ISO/Ghost (3)");
 	do // until we finds an entry
 	{
-		LOG_DEBUG("查找文件");
+		//LOG_DEBUG("查找文件");
 		// Don't care about . and ..
 		//if(IsDots(FindFileData.cFileName))
 		if ((_tcscmp(FindFileData.cFileName, _T(".")) == 0) ||
@@ -168,11 +168,11 @@ vector<wstring> CUtil::FindIsoGhoFileInternal( const wstring& root,int FolderLev
 		if((FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 		{
 			wstring wstrTemp = FindFileData.cFileName;
-			LOG_DEBUG("目录：%s",String::fromStdWString(wstrTemp).c_str());
+			//LOG_DEBUG("目录：%s",String::fromStdWString(wstrTemp).c_str());
 			transform(wstrTemp.begin(),wstrTemp.end(),wstrTemp.begin(),towlower);
 			if (wstrTemp == L"$recycle.bin")
 			{
-				LOG_DEBUG("跳过回收站的文件");
+				//LOG_DEBUG("跳过回收站的文件");
 				continue;
 			}
 			WCHAR RelativePathNewDirFound[MAX_PATH] = {0};
@@ -191,20 +191,20 @@ vector<wstring> CUtil::FindIsoGhoFileInternal( const wstring& root,int FolderLev
 		{
 			// We have found a file
 			wstring strCompare = FindFileData.cFileName;
-			LOG_DEBUG("查找ISO/Ghost (%s)",String::fromStdWString(strCompare).c_str());
+			//LOG_DEBUG("查找ISO/Ghost (%s)",String::fromStdWString(strCompare).c_str());
 			transform(strCompare.begin(), strCompare.end(), strCompare.begin(), towlower);
 			if (CUtil::isStringEndsWith(strCompare,L".gho") || CUtil::isStringEndsWith(strCompare,L".iso"))
 			{
-				LOG_DEBUG("We Get one ,OK we need this iso");
+				//LOG_DEBUG("We Get one ,OK we need this iso");
 				TCHAR AbsolutePathOfNewFile[MAX_PATH] = {0};
 				wcscpy(AbsolutePathOfNewFile,root.c_str());
 				PathAddBackslash(AbsolutePathOfNewFile);
 				wcscat(AbsolutePathOfNewFile,FindFileData.cFileName);
 				ret.push_back(AbsolutePathOfNewFile);
-				LOG_DEBUG("找到了一个GHO/ISO文件%s",String::fromStdWString(AbsolutePathOfNewFile).c_str());
-			}else{
-				LOG_DEBUG("不需要");
-			}
+				//LOG_DEBUG("找到了一个GHO/ISO文件%s",String::fromStdWString(AbsolutePathOfNewFile).c_str());
+			}//else{
+				//LOG_DEBUG("不需要");
+			//}
 		}
 		
 	}while (FindNextFile(hFind,&FindFileData));// do - while
@@ -212,7 +212,7 @@ vector<wstring> CUtil::FindIsoGhoFileInternal( const wstring& root,int FolderLev
 	if(GetLastError() != ERROR_NO_MORE_FILES) // no more files there
 	{
 		// some error occured, close the handle and return FALSE
-		LOG_DEBUG("查找时FindNextFile发生错误 %d",GetLastError());
+		LOG_ERROR("查找时FindNextFile发生错误 %d",GetLastError());
 		FindClose(hFind);
 		return ret;
 	}

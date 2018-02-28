@@ -10,7 +10,10 @@
 #include "CmdExecuter.h"
 #include "util/StringEx.h"
 #include "util/Logger.h"
+#include "boost/regex.hpp"
 // CDlgImagexRestore 对话框
+
+#define TIMER_COUNT_USED_TIME 1 
 
 IMPLEMENT_DYNAMIC(CDlgImagexRestore, CDialogEx)
 
@@ -29,7 +32,7 @@ CDlgImagexRestore::CDlgImagexRestore(CWnd* pParent /*=NULL*/)
 	, m_strTimeUsed(_T(""))
 	, m_strDestPartionId(_T(""))
 {
-
+	m_iTimerCount = 0;
 }
 
 CDlgImagexRestore::~CDlgImagexRestore()
@@ -60,6 +63,9 @@ void CDlgImagexRestore::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CDlgImagexRestore, CDialogEx)
 	ON_BN_CLICKED(IDOK, &CDlgImagexRestore::OnBnClickedOk)
 	ON_MESSAGE(WM_UNEXCEPT_IMAGEX_RESTORE_ERROR,&CDlgImagexRestore::OnUnexpectError)
+	ON_MESSAGE(WM_PROGRESS_IMAGEX_RESTORE,&CDlgImagexRestore::OnUpdateProgress)
+	ON_BN_CLICKED(IDCANCEL, &CDlgImagexRestore::OnBnClickedCancel)
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 void CDlgImagexRestore::SetOneKeyImageStoreCfg( int iWimIndex, const CString& strRestoreDestPartionName, const CString& strRestoreDestPartionIDs, const CString& strSourceMain, const CString& strSourceSub )
@@ -135,6 +141,11 @@ void CDlgImagexRestore::OnBnClickedOk()
 		return;
 	}
 	GetDlgItem(IDOK)->EnableWindow(FALSE);
+	m_iTimerCount = 0;
+	SetTimer(TIMER_COUNT_USED_TIME,1000,NULL);
+	m_ComboxBootPartion.GetLBText(m_ComboxBootPartion.GetCurSel(),m_strCurSelBootPartion);
+	ASSERT(m_strCurSelBootPartion.GetLength()>=2);
+	m_strCurSelBootPartion = m_strCurSelBootPartion.Left(2);
 	AfxBeginThread(ThreadFunDoImagexRestore,this);
 }
 
@@ -152,6 +163,7 @@ UINT CDlgImagexRestore::ThreadFunDoImagexRestore( LPVOID lpThreadParam )
 	CDlgImagexRestore* pDlg = (CDlgImagexRestore*)lpThreadParam;
 	UINT retCode = pDlg->DoImagexRestoreInternal();
 	pDlg->GetDlgItem(IDOK)->EnableWindow(TRUE);
+	pDlg->KillTimer(TIMER_COUNT_USED_TIME);
 	return retCode;
 }
 
@@ -196,6 +208,47 @@ UINT CDlgImagexRestore::DoImagexRestoreInternal()
 			LOG_INFO("执行格式化的结果为：%d",cmdR);
 		}
 	}
+
+	//调用IMAGEX.EXE执行系统安装 imagex.exe /apply "Z:\sources\install.wim" 1 "C:"
+	CExtractCmdExecuter execImagex;
+	execImagex.Extract(IDR_BIN_imagex_exe,L"BIN",L"imagex.exe");
+	wstring wstrCmd = L"/apply \"";						// /apply "
+	wstrCmd += (LPCTSTR)m_RestoreCfg.m_strSourceMain;
+	wstrCmd += L"\" ";									// /apply "Z:\sources\install.wim" 
+	wstrCmd += String(String::fromNumber(m_RestoreCfg.m_iWimIndex)).toStdWString();
+	wstrCmd += L" \"";									// /apply "Z:\sources\install.wim" 1 "
+	ASSERT(m_RestoreCfg.m_strRestoreDestPartionName.GetLength() >= 2); //C:
+	CString TargetPartion = m_RestoreCfg.m_strRestoreDestPartionName.Left(2);
+	wstrCmd += (LPCTSTR)TargetPartion;					// /apply "Z:\sources\install.wim" 1 "C:
+	wstrCmd += L"\"";
+	INT iResultImagexExecute = execImagex.ExecCommand(L"imagex.exe",wstrCmd.c_str(),TRUE,TRUE,TRUE,this);
+	if (iResultImagexExecute == 0)
+	{
+		//执行成功
+		LOG_INFO("执行imagex安装成功");
+		//bcdboot.exe C:\Windows /s C: /f ALL /l zh-CN
+		CExtractCmdExecuter exec;
+		exec.Extract(IDR_BIN_bcdboot_exe,L"BIN",L"bcdboot.exe");
+		wstring wstrCmdBcdbootCmd;
+		wstrCmdBcdbootCmd = (LPCTSTR)TargetPartion;
+		wstrCmdBcdbootCmd += L"\\Windows"; //"C:\Windows "
+		wstrCmdBcdbootCmd += L" /s ";
+		wstrCmdBcdbootCmd += m_strCurSelBootPartion;
+		wstrCmdBcdbootCmd += L" /f ALL /l zh-CN";
+		wstring ResultStr;
+		INT iResult = exec.ExecCommandWithResultText(L"bcdboot.exe",wstrCmdBcdbootCmd.c_str(),ResultStr);
+		if (iResult == 0)
+		{
+			LOG_INFO("执行bcdboot.exe添加引导成功");
+		}else{
+			LOG_INFO("执行bcdboot.exe添加引导失败");
+		}
+	}
+	else
+	{
+		//执行失败
+		LOG_INFO("执行imagex失败");
+	}
 	return (DWORD)-1;
 }
 
@@ -212,4 +265,118 @@ LRESULT CDlgImagexRestore::OnUnexpectError( WPARAM ,LPARAM lParam )
 	}
 	return 0;
 }
+// NOTE: 这个函数在工作线程中运行，不要在这个函数里执行界面操作。
+void CDlgImagexRestore::ExecCmdCallBack( const std::string& text )
+{
+	//text是执行命令行的输出，这里是imagex /apply安装系统的过程
+	int stringBeginPos = text.find_last_of('[');
+	std::string subStringToMatch = text.substr(stringBeginPos,text.length()-stringBeginPos);
+	LOG_INFO("匹配字符串：%s",subStringToMatch.c_str());
+	// 先匹配带剩余时间的
+	// [   7% ] Applying progress: 2:25 mins remaining 
+	// [  66% ] Applying progress: 58 secs remaining
+	//
+	bool bHasCalculateRemainTime = false;
+	std::string strPercent = "0";
+	std::string strTimeRemainMinutes, strTimeRemainSeconds;
+	if (subStringToMatch.find("mins") != std::string::npos)
+	{
+		//\[.*(\d)+% \] Applying progress: (\d+):(\d+) mins remaining.*
+		boost::smatch mat;
+		boost::regex reg( "\\[[ ]*(\\d+)% \\] Applying progress: (\\d+):(\\d+) mins remaining.*" );
+		bool r = boost::regex_match( subStringToMatch, mat, reg);
+		//注意子项的个数为匹配数量+1，如：[   7% ] Applying progress: 2:25 mins remaining  7 2 25 
+		if (r && mat.size() == 4)
+		{
+			strPercent = mat[1];
+			strTimeRemainMinutes = mat[2];
+			if (strTimeRemainMinutes.length() == 1)
+			{
+				strTimeRemainMinutes = std::string("0") + strTimeRemainMinutes;
+			}
+			strTimeRemainSeconds = mat[3];
+			if (strTimeRemainSeconds.length() == 1)
+			{
+				strTimeRemainSeconds = std::string("0") + strTimeRemainSeconds;
+			}
+			bHasCalculateRemainTime = true;
+		}else{
+			LOG_DEBUG("不匹配mins");
+		}
+	}
+	else if (subStringToMatch.find("secs") != std::string::npos)
+	{
+		//\[.*(\d)+% \] Applying progress: (\d+) secs remaining.*
+		boost::smatch mat;
+		boost::regex reg( "\\[[ ]*(\\d+)% \\] Applying progress: (\\d+) secs remaining.*" );
+		bool r = boost::regex_match( subStringToMatch, mat, reg);
+		if (r && mat.size() == 3)
+		{
+			strPercent = mat[1];
+			strTimeRemainMinutes = "00";
+			strTimeRemainSeconds = mat[2];
+			if (strTimeRemainSeconds.length() == 1)
+			{
+				strTimeRemainSeconds = std::string("0") + strTimeRemainSeconds;
+			}
+			bHasCalculateRemainTime = true;
+		}else{
+			LOG_DEBUG("不匹配secs");
+		}
+	}
+	else
+	{
+		//\[.*(\d)+% \] Applying progress.*
+		boost::smatch mat;
+		boost::regex reg( "\\[[ ]*(\\d+)% \\] Applying progress.*" );
+		bool r = boost::regex_match( subStringToMatch, mat, reg);
+		if (r && mat.size() == 2)
+		{
+			strPercent = mat[1];
+			strTimeRemainMinutes = "0";
+			strTimeRemainSeconds = "0";
+			bHasCalculateRemainTime = false;
+		}else{
+			LOG_DEBUG("不匹配无remain");
+		}
+	}
+	// 写入到变量中
+	m_strCompletePercent = String(strPercent + "%").toStdWString().c_str();
+	if (bHasCalculateRemainTime)
+	{
+		m_strTimeRemain = String(strTimeRemainMinutes + ":" + strTimeRemainSeconds).toStdWString().c_str();
+	}
+	else
+	{
+		m_strTimeRemain = L"--:--";
+	}
+	PostMessage(WM_PROGRESS_IMAGEX_RESTORE);
+}
 
+LRESULT CDlgImagexRestore::OnUpdateProgress( WPARAM,LPARAM )
+{
+	UpdateData(FALSE);
+	return 0;
+}
+
+void CDlgImagexRestore::OnBnClickedCancel()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	OnCancel();
+}
+
+
+void CDlgImagexRestore::OnTimer(UINT_PTR nIDEvent)
+{
+	// TODO: 在此添加消息处理程序代码和/或调用默认值
+	if (nIDEvent == TIMER_COUNT_USED_TIME)
+	{
+		m_iTimerCount ++;
+		UINT hour = m_iTimerCount / 3600;
+		UINT minute = m_iTimerCount % 3600 / 60;
+		UINT seconds = m_iTimerCount % 60;
+		m_strTimeUsed = String(String::fromNumber(hour,2) + ":" + String::fromNumber(minute,2) + ":" + String::fromNumber(seconds,2)).toStdWString().c_str();
+		UpdateData(FALSE);
+	}
+	__super::OnTimer(nIDEvent);
+}

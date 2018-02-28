@@ -78,12 +78,13 @@ BOOL CUPEToolApp::InitInstance()
 	DateTime dt;
 	stringstream ss;
 	ss << dt.getYear() << dt.getMonth() << dt.getDay() << dt.getHour() << dt.getMinute() << dt.getSecond() << ".txt";
-	if (PathFileExistsW(L"X:\\temp"))
-	{
-		Logger::getInstance()->setLogFileName(std::string("X:\\temp\\") + ss.str());
-	}
-	else
-		Logger::getInstance()->setLogFileName(ss.str());
+	Logger::getInstance()->setLogFileName(ss.str());
+// 	if (PathFileExistsW(L"X:\\Windows"))
+// 	{
+// 		Logger::getInstance()->setLogFileName(ss.str());
+// 	}
+// 	else
+// 		MessageBox(NULL,L"程序只能在PE环境中运行!",NULL,MB_OK);
 	
 	INT_PTR nResponse = dlg.DoModal();
 	if (nResponse == IDOK)

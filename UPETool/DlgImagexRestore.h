@@ -1,5 +1,6 @@
 #pragma once
 #include "afxwin.h"
+#include "InterfaceCallBack.h"
 
 class COneKeyImageRestoreTaskCfg
 {
@@ -23,7 +24,7 @@ typedef enum
 
 // CDlgImagexRestore ¶Ô»°¿ò
 
-class CDlgImagexRestore : public CDialogEx
+class CDlgImagexRestore : public CDialogEx ,ICallBackRestore
 {
 	DECLARE_DYNAMIC(CDlgImagexRestore)
 
@@ -43,7 +44,9 @@ private:
 	UINT DoImagexRestoreInternal();
 	void PostUnexpectedError(UINT ErrorCode);
 public:
+	virtual void ExecCmdCallBack(const std::string& text) override;
 	LRESULT OnUnexpectError(WPARAM ,LPARAM lParam);
+	LRESULT OnUpdateProgress(WPARAM,LPARAM);
 	void SetOneKeyImageStoreCfg(int iWimIndex,
 		const CString& strRestoreDestPartionName,
 		const CString& strRestoreDestPartionIDs,
@@ -74,4 +77,8 @@ public:
 	CString m_strDestPartionId;
 	int m_iWimIndex;
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	afx_msg void OnBnClickedCancel();
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	int m_iTimerCount;
+	CString m_strCurSelBootPartion;
 };

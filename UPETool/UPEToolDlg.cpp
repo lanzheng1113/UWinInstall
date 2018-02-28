@@ -11,6 +11,7 @@
 #include "CmdExecuter.h"
 #include "DialogImagexBackup.h"
 #include "UserMsg.h"
+#include <boost/regex.hpp>
 #include "Markup.h"
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -808,7 +809,10 @@ BOOL CUPEToolDlg::FindWIM( LPCWSTR WimFilePath ,vector<CExtraItem>& vec )
 	execter.Extract(IDR_BIN_imagex_exe,L"BIN",L"imagex.exe");
 	wstring wstr = L"/info ";
 	wstr += WimFilePath;
-	WCHAR szTempPath[MAX_PATH] = {0};
+	wstring wstrContent;
+	execter.ExecCommandWithResultText(L"imagex.exe",wstr.c_str(),wstrContent,REncodingUTF8);
+	string contents = String::fromStdWString(wstrContent);
+	/*WCHAR szTempPath[MAX_PATH] = {0};
 	GetTempPath(MAX_PATH,szTempPath);
 	WCHAR szTempFileName[MAX_PATH] = {0};
 	GetTempFileName(szTempPath,L"~l",0,szTempFileName);
@@ -830,7 +834,7 @@ BOOL CUPEToolDlg::FindWIM( LPCWSTR WimFilePath ,vector<CExtraItem>& vec )
 		LOG_INFO("%s",String::fromStdWString(WimFilePath).c_str());
 		LOG_INFO("%s",contents.c_str());
 		ifs.close();
-	}
+	}*/
 	//处理文件内容contents中的XML
 	int posBeg = contents.find_first_of('<');
 	int posEnd = contents.find_last_of('>');
@@ -932,75 +936,39 @@ BOOL CUPEToolDlg::FindWIM( LPCWSTR WimFilePath ,vector<CExtraItem>& vec )
 			}
 		}
 		//删除文件
-		DeleteFile(szTempFileName);
 		return TRUE;
 	}
 	else
 	{
-		DeleteFile(szTempFileName);
 		return FALSE;
 	}
 	return FALSE;
 }
 
-
 void CUPEToolDlg::OnBnClickedCancel()
 {
 	// TODO: 在此添加控件通知处理程序代码
 
-	//打开文件并读取文件内容
-	/*
-	ifstream ifs;
-	ifs.open("1.txt");
-	std::string contents;
-	if (ifs.is_open())
+	std::string strTest = "[   17% ] Applying progress: 2:25 mins remaining ";
+	boost::smatch mat;
+	boost::regex reg( "\\[[ ]*(\\d+)% \\] Applying progress: (\\d+):(\\d+) mins remaining.*" );
+	bool r = boost::regex_match( strTest, mat, reg);
+	if (r)
 	{
-		std::stringstream buffer;  
-		buffer << ifs.rdbuf();  
-		contents = buffer.str();
-		// UTF-8 to ansi
-		wstring str = CUtil::UTF8ToUnicode(contents);
-		contents = CUtil::WStringToString(str);
-		MessageBoxA(this->GetSafeHwnd(),contents.c_str(),NULL,MB_OK);
-		ifs.close();
-	}
-	//处理文件内容contents中的XML
-	int posBeg = contents.find_first_of('<');
-	int posEnd = contents.find_last_of('>');
-	if (posBeg != -1 && posEnd != -1)
-	{
-		std::string strXml = contents.substr(posBeg,posEnd-posBeg+1);
-		//	StarXML xmlObj(strXml);
-		CMarkup xmlParser;
-		if (xmlParser.SetDoc((LPCTSTR)CString(strXml.c_str())))
+		//std::string strPercent = mat[0];
+		//std::string strTimeRemainMinutes = mat[1];
+		//std::string strTimeRemainSeconds = mat[2];
+		//MessageBox(String(strPercent + " " + strTimeRemainMinutes + " " + strTimeRemainSeconds).toStdWString().c_str());
+		std::string str;
+		for (int i=0; i!=mat.size(); i++)
 		{
-			while (xmlParser.FindChildElem(_T("IMAGE")))
-			{
-				wstring DisplayName;
-				wstring cbSize;
-				xmlParser.IntoElem();
-				wstring index = xmlParser.GetAttrib(_T("INDEX"));
-
-				if (xmlParser.FindChildElem(_T("HARDLINKBYTES")))
-				{
-					xmlParser.IntoElem();
-					cbSize = xmlParser.GetData();
-					xmlParser.OutOfElem();
-				}
-
-				if (xmlParser.FindChildElem(_T("DISPLAYNAME")))
-				{
-					xmlParser.IntoElem();
-					DisplayName = xmlParser.GetData();
-					xmlParser.OutOfElem();
-				}
-				
-				xmlParser.OutOfElem();
-			}
-			
+			str += mat[i]; str += " ";
 		}
+		MessageBoxA(NULL,str.c_str(),NULL,MB_OK);
+	}else{
+		MessageBox(L"不匹配mins");
 	}
-	*/
+
 	CDialogEx::OnCancel();
 }
 

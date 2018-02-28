@@ -65,23 +65,27 @@ BOOL CExtractCmdExecuter::Extract( UINT ResourceId, LPCWSTR rcType, LPCWSTR szTa
 	return CUtil::ExtractResource(MAKEINTRESOURCE(ResourceId),rcType,(m_pwd + szTargetName).c_str(),NULL);
 }
 
-INT CExtractCmdExecuter::ExecCommand( LPCWSTR szExe, LPCWSTR szCMD, LPCWSTR lpszStdOutFileName, 
+INT CExtractCmdExecuter::ExecCommand( LPCWSTR szExe, LPCWSTR szCMD, 
 	BOOL IsChangeCurDir/*=TRUE*/, BOOL fHide /*= TRUE*/,BOOL bWaitUntilFinish /*= TRUE*/,ICallBackRestore* cbk /*=NULL*/ )
 {
-	//子进程启动信息设置
+	// 设置需要将标准输出重定位到哪个临时文件
+	WCHAR szTempPath[MAX_PATH] = {0};
+	GetTempPath(MAX_PATH,szTempPath);
+	WCHAR szTempFileName[MAX_PATH] = {0};
+	GetTempFileName(szTempPath,L"~l",0,szTempFileName);
+	// 子进程启动信息设置
 	STARTUPINFOW si;  
 	si.cb = sizeof(STARTUPINFO);  
 	GetStartupInfoW(&si);    
 	si.wShowWindow = fHide ? SW_HIDE : SW_SHOW;
 	si.dwFlags     = STARTF_USESHOWWINDOW;  
 	HANDLE hOutPutFile = 0;
-	if (lpszStdOutFileName && lpszStdOutFileName[0])
+	if (szTempFileName[0])
 	{
 		si.dwFlags = si.dwFlags | STARTF_USESTDHANDLES;
 		SECURITY_ATTRIBUTES psa={sizeof(psa),NULL,TRUE};;  
 		psa.bInheritHandle=TRUE;
-		wstring wstr = lpszStdOutFileName;
-		hOutPutFile = CreateFile((LPCWSTR)wstr.c_str(), GENERIC_WRITE, 
+		hOutPutFile = CreateFile(szTempFileName, GENERIC_WRITE, 
 			FILE_SHARE_READ|FILE_SHARE_WRITE, &psa, 
 			CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);  
 		si.hStdOutput = hOutPutFile;
@@ -112,24 +116,25 @@ INT CExtractCmdExecuter::ExecCommand( LPCWSTR szExe, LPCWSTR szCMD, LPCWSTR lpsz
 		LOG_INFO("执行命令%s时发生了错误，错误ID为%d：",String::fromStdWString((LPCWSTR)FullCmdLine).c_str(),GetLastError());
 		return GetLastError();
 	}
+	std::string fileContent;
 	if (bWaitUntilFinish)
 	{
-		if (cbk && lpszStdOutFileName)
+		if (cbk && szTempFileName[0])
 		{
 			int x = 0;
 			while (WaitForSingleObject(pi.hProcess, 1000) == WAIT_TIMEOUT)
 			{
-				FileReader fr(String::fromStdWString(lpszStdOutFileName));
+				FileReader fr(String::fromStdWString(szTempFileName));
 				fr.open();
-				std::string str = fr.read();
-				cbk->ExecCmdCallBack(str);
+				fileContent = fr.read();
+				cbk->ExecCmdCallBack(fileContent);
 				fr.close();
 				//LOG_DEBUG("%d\n%s",x++,str.c_str());
 			}
-			FileReader fr(String::fromStdWString(lpszStdOutFileName));
+			FileReader fr(String::fromStdWString(szTempFileName));
 			fr.open();
-			std::string str = fr.read();
-			cbk->ExecCmdCallBack(str);
+			fileContent = fr.read();
+			cbk->ExecCmdCallBack(fileContent);
 			fr.close();
 			//LOG_DEBUG("%d\n%s",x++,str.c_str());
 		}else{
@@ -142,19 +147,25 @@ INT CExtractCmdExecuter::ExecCommand( LPCWSTR szExe, LPCWSTR szCMD, LPCWSTR lpsz
 		CloseHandle(pi.hProcess);
 		CloseHandle(pi.hThread);
 		SetCurrentDirectoryW(szCurPath);
-		//LOG_INFO("执行命令%s的结果为：",String::fromStdWString((LPCTSTR)FullCmdLine).c_str());
-		//LOG_INFO("%s",String::fromStdWString(Result).c_str());
+		LOG_INFO("执行命令%s的结果为：",String::fromStdWString((LPCTSTR)FullCmdLine).c_str());
+		LOG_INFO("%s",fileContent.c_str());
+		if (hOutPutFile)
+		{
+			//DeleteFile(szTempFileName); //先注释掉这行，用于保留着原始数据
+			CloseHandle(hOutPutFile);
+		}
 		return dwExitCode;
 	}
 	SetCurrentDirectoryW(szCurPath);
 	if (hOutPutFile)
 	{
+		//DeleteFile(szTempFileName); //先注释掉这行，用于保留着原始数据
 		CloseHandle(hOutPutFile);
 	}
 	return 0;
 }
 
-INT CExtractCmdExecuter::ExecCommandWithResultText( LPCWSTR szExe, LPCWSTR szCmd, OUT wstring& Result )
+INT CExtractCmdExecuter::ExecCommandWithResultText( LPCWSTR szExe, LPCWSTR szCmd, OUT wstring& Result, int ResultEncodeing/*=REncodingANSI*/ )
 {
 	Result = L"";
 	WCHAR szTempPath[MAX_PATH] = {0};
@@ -213,12 +224,16 @@ INT CExtractCmdExecuter::ExecCommandWithResultText( LPCWSTR szExe, LPCWSTR szCmd
 	if (fr.open())
 	{
 		std::string str = fr.read();
-		Result = String(str).toStdWString();
+		if (ResultEncodeing == REncodingUTF8)
+		{
+			Result = CUtil::UTF8ToUnicode(str);
+		}
+		else
+			Result = String(str).toStdWString();
 	}
 	LOG_INFO("执行命令%s的结果为：",String::fromStdWString(wstring(szExe)+wstring(szCmd)).c_str());
 	LOG_INFO("%s",String::fromStdWString(Result).c_str());
 	return dwExitCode;
-
 }
 
 INT CCmdExecuter::ExecCommandWithResultText( LPCWSTR szExe, LPCWSTR szCmd, OUT wstring& Result )
