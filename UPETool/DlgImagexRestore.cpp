@@ -15,6 +15,16 @@
 
 #define TIMER_COUNT_USED_TIME 1 
 
+enum
+{
+	STEP_START_FORMAT,
+	STEP_END_FORMAT,
+	STEP_START_SYSTEM_IMAGEX,
+	STEP_END_SYSTEM_IMAGEX,
+	STEP_START_ADD_BOOT,
+	STEP_END_ADD_BOOT
+};
+
 IMPLEMENT_DYNAMIC(CDlgImagexRestore, CDialogEx)
 
 CDlgImagexRestore::CDlgImagexRestore(CWnd* pParent /*=NULL*/)
@@ -31,6 +41,7 @@ CDlgImagexRestore::CDlgImagexRestore(CWnd* pParent /*=NULL*/)
 	, m_strTimeRemain(_T(""))
 	, m_strTimeUsed(_T(""))
 	, m_strDestPartionId(_T(""))
+	, m_strNotice(_T(""))
 {
 	m_iTimerCount = 0;
 }
@@ -57,13 +68,15 @@ void CDlgImagexRestore::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_COMBO_FORMAT_TYPE, m_ComboxFormatType);
 	DDX_Control(pDX, IDC_COMBO_BOOT_PARTION, m_ComboxBootPartion);
 	DDX_Text(pDX, IDC_STATIC_DEST_PARTION_NUMBER, m_strDestPartionId);
+	DDX_Text(pDX, IDC_STATIC_Notice, m_strNotice);
 }
 
 
 BEGIN_MESSAGE_MAP(CDlgImagexRestore, CDialogEx)
 	ON_BN_CLICKED(IDOK, &CDlgImagexRestore::OnBnClickedOk)
 	ON_MESSAGE(WM_UNEXCEPT_IMAGEX_RESTORE_ERROR,&CDlgImagexRestore::OnUnexpectError)
-	ON_MESSAGE(WM_PROGRESS_IMAGEX_RESTORE,&CDlgImagexRestore::OnUpdateProgress)
+	ON_MESSAGE(WM_PROGRESS_IMAGEX_RESTORE,&CDlgImagexRestore::OnImagexInstallSpecificUpdateProgress)
+	ON_MESSAGE(WM_MYMSG_IMAGEX_INSTALL_TOTAL_PROGRESS,&CDlgImagexRestore::OnUpdateTotalProgress)
 	ON_BN_CLICKED(IDCANCEL, &CDlgImagexRestore::OnBnClickedCancel)
 	ON_WM_TIMER()
 END_MESSAGE_MAP()
@@ -141,6 +154,7 @@ void CDlgImagexRestore::OnBnClickedOk()
 		return;
 	}
 	GetDlgItem(IDOK)->EnableWindow(FALSE);
+	GetDlgItem(IDCANCEL)->EnableWindow(FALSE);
 	m_iTimerCount = 0;
 	SetTimer(TIMER_COUNT_USED_TIME,1000,NULL);
 	m_ComboxBootPartion.GetLBText(m_ComboxBootPartion.GetCurSel(),m_strCurSelBootPartion);
@@ -187,6 +201,7 @@ UINT CDlgImagexRestore::DoImagexRestoreInternal()
 		}
 		else
 		{
+			PostMessage(WM_MYMSG_IMAGEX_INSTALL_TOTAL_PROGRESS,STEP_START_FORMAT);
 			ASSERT(m_RestoreCfg.m_strRestoreDestPartionName.GetLength() >= 2); //C:
 			CString TargetPartion = m_RestoreCfg.m_strRestoreDestPartionName.Left(2);
 			std::wstring wstrCmdLine = L"/c format.com /q /x /y ";
@@ -206,9 +221,15 @@ UINT CDlgImagexRestore::DoImagexRestoreInternal()
 			std::wstring Result;
 			INT cmdR = exec.ExecCommandWithResultText(L"X:\\Windows\\system32\\cmd.exe",wstrCmdLine.c_str(),Result);
 			LOG_INFO("执行格式化的结果为：%d",cmdR);
+			PostMessage(WM_MYMSG_IMAGEX_INSTALL_TOTAL_PROGRESS,STEP_END_FORMAT,cmdR);
+			if (cmdR != 0)
+			{
+				return cmdR;
+			}
 		}
 	}
-
+	//发送窗口消息，开始安装系统。
+	PostMessage(WM_MYMSG_IMAGEX_INSTALL_TOTAL_PROGRESS,STEP_START_SYSTEM_IMAGEX);
 	//调用IMAGEX.EXE执行系统安装 imagex.exe /apply "Z:\sources\install.wim" 1 "C:"
 	CExtractCmdExecuter execImagex;
 	execImagex.Extract(IDR_BIN_imagex_exe,L"BIN",L"imagex.exe");
@@ -222,10 +243,12 @@ UINT CDlgImagexRestore::DoImagexRestoreInternal()
 	wstrCmd += (LPCTSTR)TargetPartion;					// /apply "Z:\sources\install.wim" 1 "C:
 	wstrCmd += L"\"";
 	INT iResultImagexExecute = execImagex.ExecCommand(L"imagex.exe",wstrCmd.c_str(),TRUE,TRUE,TRUE,this);
+	PostMessage(WM_MYMSG_IMAGEX_INSTALL_TOTAL_PROGRESS,STEP_END_SYSTEM_IMAGEX,iResultImagexExecute);
 	if (iResultImagexExecute == 0)
 	{
 		//执行成功
 		LOG_INFO("执行imagex安装成功");
+		PostMessage(WM_MYMSG_IMAGEX_INSTALL_TOTAL_PROGRESS,STEP_START_ADD_BOOT);
 		//bcdboot.exe C:\Windows /s C: /f ALL /l zh-CN
 		CExtractCmdExecuter exec;
 		exec.Extract(IDR_BIN_bcdboot_exe,L"BIN",L"bcdboot.exe");
@@ -237,6 +260,7 @@ UINT CDlgImagexRestore::DoImagexRestoreInternal()
 		wstrCmdBcdbootCmd += L" /f ALL /l zh-CN";
 		wstring ResultStr;
 		INT iResult = exec.ExecCommandWithResultText(L"bcdboot.exe",wstrCmdBcdbootCmd.c_str(),ResultStr);
+		PostMessage(WM_MYMSG_IMAGEX_INSTALL_TOTAL_PROGRESS,STEP_END_ADD_BOOT,iResult);
 		if (iResult == 0)
 		{
 			LOG_INFO("执行bcdboot.exe添加引导成功");
@@ -353,7 +377,7 @@ void CDlgImagexRestore::ExecCmdCallBack( const std::string& text )
 	PostMessage(WM_PROGRESS_IMAGEX_RESTORE);
 }
 
-LRESULT CDlgImagexRestore::OnUpdateProgress( WPARAM,LPARAM )
+LRESULT CDlgImagexRestore::OnImagexInstallSpecificUpdateProgress( WPARAM,LPARAM )
 {
 	UpdateData(FALSE);
 	return 0;
@@ -379,4 +403,43 @@ void CDlgImagexRestore::OnTimer(UINT_PTR nIDEvent)
 		UpdateData(FALSE);
 	}
 	__super::OnTimer(nIDEvent);
+}
+
+LRESULT CDlgImagexRestore::OnUpdateTotalProgress( WPARAM wParma,LPARAM lParam )
+{
+	int eCode = (int)lParam;
+	switch (wParma)
+	{
+	case STEP_START_FORMAT:
+		m_strNotice = L"正在格式化安装盘……";
+		break;
+	case STEP_END_FORMAT:
+		if (eCode != 0)
+		{
+			m_strNotice.Format(L"在格式化时发生了错误：%d",eCode);
+		}
+		break;
+	case STEP_START_SYSTEM_IMAGEX:
+		m_strNotice = L"正在安装系统……";
+		break;
+	case STEP_END_SYSTEM_IMAGEX:
+		if (eCode != 0)
+		{
+			m_strNotice.Format(L"在安装系统时发生了错误：%d",eCode);
+		}
+		break;
+	case STEP_START_ADD_BOOT:
+		m_strNotice = L"正在添加系统引导……";
+		break;
+	case STEP_END_ADD_BOOT:
+		if (eCode != 0)
+		{
+			m_strNotice.Format(L"添加系统引导时发生了错误：%d",eCode);
+		}else{
+			MessageBox(L"成功安装系统");
+			EndDialog(IDOK);
+		}
+		break;
+	}
+	return 0;
 }

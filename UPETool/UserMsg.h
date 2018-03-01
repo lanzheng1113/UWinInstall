@@ -13,3 +13,6 @@
 
 // 更新ImageX还原时的进度信息（百分比，剩余时间）
 #define WM_PROGRESS_IMAGEX_RESTORE (WM_USER + 105)
+
+// 报告IMAGEX安装对话框的总体进度（格式化、IMAGEX和添加引导）
+#define WM_MYMSG_IMAGEX_INSTALL_TOTAL_PROGRESS (WM_USER + 106)

@@ -46,7 +46,8 @@ private:
 public:
 	virtual void ExecCmdCallBack(const std::string& text) override;
 	LRESULT OnUnexpectError(WPARAM ,LPARAM lParam);
-	LRESULT OnUpdateProgress(WPARAM,LPARAM);
+	LRESULT OnImagexInstallSpecificUpdateProgress(WPARAM,LPARAM);
+	LRESULT OnUpdateTotalProgress(WPARAM wParma,LPARAM lParam);
 	void SetOneKeyImageStoreCfg(int iWimIndex,
 		const CString& strRestoreDestPartionName,
 		const CString& strRestoreDestPartionIDs,
@@ -81,4 +82,6 @@ public:
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	int m_iTimerCount;
 	CString m_strCurSelBootPartion;
+	// 控件变量，进度提示栏
+	CString m_strNotice;
 };
