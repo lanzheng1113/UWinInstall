@@ -44,6 +44,7 @@ CDlgImagexRestore::CDlgImagexRestore(CWnd* pParent /*=NULL*/)
 	, m_strNotice(_T(""))
 {
 	m_iTimerCount = 0;
+	m_hThreadInstall = 0;
 }
 
 CDlgImagexRestore::~CDlgImagexRestore()
@@ -160,7 +161,7 @@ void CDlgImagexRestore::OnBnClickedOk()
 	m_ComboxBootPartion.GetLBText(m_ComboxBootPartion.GetCurSel(),m_strCurSelBootPartion);
 	ASSERT(m_strCurSelBootPartion.GetLength()>=2);
 	m_strCurSelBootPartion = m_strCurSelBootPartion.Left(2);
-	AfxBeginThread(ThreadFunDoImagexRestore,this);
+	m_hThreadInstall = AfxBeginThread(ThreadFunDoImagexRestore,this)->m_hThread;
 }
 
 
@@ -178,6 +179,7 @@ UINT CDlgImagexRestore::ThreadFunDoImagexRestore( LPVOID lpThreadParam )
 	UINT retCode = pDlg->DoImagexRestoreInternal();
 	pDlg->GetDlgItem(IDOK)->EnableWindow(TRUE);
 	pDlg->KillTimer(TIMER_COUNT_USED_TIME);
+	pDlg->m_hThreadInstall = 0;
 	return retCode;
 }
 
@@ -386,6 +388,15 @@ LRESULT CDlgImagexRestore::OnImagexInstallSpecificUpdateProgress( WPARAM,LPARAM 
 void CDlgImagexRestore::OnBnClickedCancel()
 {
 	// TODO: 在此添加控件通知处理程序代码
+	if (m_hThreadInstall)
+	{
+		GetDlgItem(IDCANCEL)->SetWindowText(L"正在取消");
+		GetDlgItem(IDCANCEL)->EnableWindow(FALSE);
+		HANDLE hThread = AfxBeginThread(ThreadFunEndTasks,this)->m_hThread;
+		WaitForSingleObject(hThread);
+		GetDlgItem(IDCANCEL)->SetWindowText(L"取消");
+		GetDlgItem(IDCANCEL)->EnableWindow(TRUE);
+	}
 	OnCancel();
 }
 
@@ -421,6 +432,7 @@ LRESULT CDlgImagexRestore::OnUpdateTotalProgress( WPARAM wParma,LPARAM lParam )
 		break;
 	case STEP_START_SYSTEM_IMAGEX:
 		m_strNotice = L"正在安装系统……";
+		GetDlgItem(IDCANCEL)->EnableWindow(TRUE);
 		break;
 	case STEP_END_SYSTEM_IMAGEX:
 		if (eCode != 0)
@@ -441,5 +453,12 @@ LRESULT CDlgImagexRestore::OnUpdateTotalProgress( WPARAM wParma,LPARAM lParam )
 		}
 		break;
 	}
+	return 0;
+}
+
+UINT CDlgImagexRestore::ThreadFunEndTasks( LPVOID lpThreadParam )
+{
+	CDlgImagexRestore* pDlg = (CDlgImagexRestore*)lpThreadParam;
+	pDlg->EndTasks();
 	return 0;
 }
