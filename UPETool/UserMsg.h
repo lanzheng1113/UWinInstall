@@ -16,3 +16,9 @@
 
 // 报告IMAGEX安装对话框的总体进度（格式化、IMAGEX和添加引导）
 #define WM_MYMSG_IMAGEX_INSTALL_TOTAL_PROGRESS (WM_USER + 106)
+
+// 开始取消安装系统的操作
+//#define WM_ENDING_TASK_START (WM_USER + 107)
+
+// 取消系统安装的操作已经完成
+//#define WM_ENDING_TASK_FINISH (WM_USER + 108)

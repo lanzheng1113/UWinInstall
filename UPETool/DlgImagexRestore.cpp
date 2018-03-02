@@ -11,6 +11,7 @@
 #include "util/StringEx.h"
 #include "util/Logger.h"
 #include "boost/regex.hpp"
+#include "util/ProcessUtils.h"
 // CDlgImagexRestore 对话框
 
 #define TIMER_COUNT_USED_TIME 1 
@@ -393,7 +394,7 @@ void CDlgImagexRestore::OnBnClickedCancel()
 		GetDlgItem(IDCANCEL)->SetWindowText(L"正在取消");
 		GetDlgItem(IDCANCEL)->EnableWindow(FALSE);
 		HANDLE hThread = AfxBeginThread(ThreadFunEndTasks,this)->m_hThread;
-		WaitForSingleObject(hThread);
+		WaitForSingleObject(hThread,INFINITE);
 		GetDlgItem(IDCANCEL)->SetWindowText(L"取消");
 		GetDlgItem(IDCANCEL)->EnableWindow(TRUE);
 	}
@@ -461,4 +462,19 @@ UINT CDlgImagexRestore::ThreadFunEndTasks( LPVOID lpThreadParam )
 	CDlgImagexRestore* pDlg = (CDlgImagexRestore*)lpThreadParam;
 	pDlg->EndTasks();
 	return 0;
+}
+
+void CDlgImagexRestore::EndTasks()
+{
+	//PostMessage(WM_ENDING_TASK_START);
+	if (m_hThreadInstall)
+	{
+		TerminateThread(m_hThreadInstall,1);
+		WaitForSingleObject(m_hThreadInstall,INFINITE);
+	}
+	DWORD pid = 0;
+	Process::KillProcess("imagex.exe");
+	Process::KillProcess("bcdboot.exe");
+	// TODO: 这里直接杀死imagex进程似乎会出现蓝屏错误，还需要后面继续验证。
+	//PostMessage(WM_ENDING_TASK_FINISH);
 }

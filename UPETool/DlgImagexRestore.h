@@ -38,11 +38,13 @@ public:
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 	static UINT ThreadFunDoImagexRestore(LPVOID lpThreadParam);
+	static UINT ThreadFunEndTasks(LPVOID lpThreadParam);
 	DECLARE_MESSAGE_MAP()
 private:
 	COneKeyImageRestoreTaskCfg m_RestoreCfg;
 	UINT DoImagexRestoreInternal();
 	void PostUnexpectedError(UINT ErrorCode);
+	void EndTasks();
 public:
 	virtual void ExecCmdCallBack(const std::string& text) override;
 	LRESULT OnUnexpectError(WPARAM ,LPARAM lParam);
@@ -84,4 +86,6 @@ public:
 	CString m_strCurSelBootPartion;
 	// 控件变量，进度提示栏
 	CString m_strNotice;
+	// 安装系统的线程句柄
+	HANDLE m_hThreadInstall;
 };
