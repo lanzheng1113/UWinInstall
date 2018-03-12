@@ -948,7 +948,7 @@ BOOL CUPEToolDlg::FindWIM( LPCWSTR WimFilePath ,vector<CExtraItem>& vec )
 void CUPEToolDlg::OnBnClickedCancel()
 {
 	// TODO: 在此添加控件通知处理程序代码
-
+	/*
 	std::string strTest = "[   17% ] Applying progress: 2:25 mins remaining ";
 	boost::smatch mat;
 	boost::regex reg( "\\[[ ]*(\\d+)% \\] Applying progress: (\\d+):(\\d+) mins remaining.*" );
@@ -968,7 +968,7 @@ void CUPEToolDlg::OnBnClickedCancel()
 	}else{
 		MessageBox(L"不匹配mins");
 	}
-
+	*/
 	CDialogEx::OnCancel();
 }
 

@@ -71,6 +71,7 @@ void CDlgImagexRestore::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_COMBO_BOOT_PARTION, m_ComboxBootPartion);
 	DDX_Text(pDX, IDC_STATIC_DEST_PARTION_NUMBER, m_strDestPartionId);
 	DDX_Text(pDX, IDC_STATIC_Notice, m_strNotice);
+	DDX_Control(pDX, IDC_PROGRESS1, m_ProgressCtrlComplete);
 }
 
 
@@ -138,7 +139,7 @@ BOOL CDlgImagexRestore::OnInitDialog()
 	m_strSourceMain = m_RestoreCfg.m_strSourceMain;
 	m_strSourceSub = m_RestoreCfg.m_strSourceSub;
 	m_iWimIndex = m_RestoreCfg.m_iWimIndex;
-	
+	m_ProgressCtrlComplete.SetRange(0,100);
 	UpdateData(FALSE);
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// 异常: OCX 属性页应返回 FALSE
@@ -382,6 +383,11 @@ void CDlgImagexRestore::ExecCmdCallBack( const std::string& text )
 
 LRESULT CDlgImagexRestore::OnImagexInstallSpecificUpdateProgress( WPARAM,LPARAM )
 {
+	int iProgress = StrToInt(m_strCompletePercent);
+	if (iProgress >= 0 && iProgress <= 100)
+	{
+		m_ProgressCtrlComplete.SetPos(iProgress);
+	}
 	UpdateData(FALSE);
 	return 0;
 }

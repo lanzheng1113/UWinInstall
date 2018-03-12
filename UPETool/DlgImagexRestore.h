@@ -1,6 +1,7 @@
 #pragma once
 #include "afxwin.h"
 #include "InterfaceCallBack.h"
+#include "afxcmn.h"
 
 class COneKeyImageRestoreTaskCfg
 {
@@ -46,7 +47,9 @@ private:
 	void PostUnexpectedError(UINT ErrorCode);
 	void EndTasks();
 public:
+	// 实现ICallBackRestore定义的回调接口
 	virtual void ExecCmdCallBack(const std::string& text) override;
+	// 未知错误
 	LRESULT OnUnexpectError(WPARAM ,LPARAM lParam);
 	LRESULT OnImagexInstallSpecificUpdateProgress(WPARAM,LPARAM);
 	LRESULT OnUpdateTotalProgress(WPARAM wParma,LPARAM lParam);
@@ -88,4 +91,5 @@ public:
 	CString m_strNotice;
 	// 安装系统的线程句柄
 	HANDLE m_hThreadInstall;
+	CProgressCtrl m_ProgressCtrlComplete;
 };
