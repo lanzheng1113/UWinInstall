@@ -92,4 +92,6 @@ public:
 	// 安装系统的线程句柄
 	HANDLE m_hThreadInstall;
 	CProgressCtrl m_ProgressCtrlComplete;
+	afx_msg void OnBnClickedCheckBootAfter();
+	afx_msg void OnBnClickedCheckHaltAfter();
 };

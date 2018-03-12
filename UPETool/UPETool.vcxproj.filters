@@ -78,6 +78,18 @@
     <ClInclude Include="InterfaceCallBack.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="DlgConfirmWithDefault.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ComfirmDlgModule.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RebootNoticeModule.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ShutdownNoticeModule.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="UPETool.cpp">
@@ -111,6 +123,15 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="DlgImagexRestore.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgConfirmWithDefault.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="RebootNoticeModule.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ShutdownNoticeModule.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

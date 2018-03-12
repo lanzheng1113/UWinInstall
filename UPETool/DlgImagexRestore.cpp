@@ -4,6 +4,9 @@
 #include "stdafx.h"
 #include "UPETool.h"
 #include "DlgImagexRestore.h"
+#include "DlgConfirmWithDefault.h"
+#include "RebootNoticeModule.h"
+#include "ShutdownNoticeModule.h"
 #include "afxdialogex.h"
 #include "PartionInfo.h"
 #include "UserMsg.h"
@@ -12,6 +15,7 @@
 #include "util/Logger.h"
 #include "boost/regex.hpp"
 #include "util/ProcessUtils.h"
+
 // CDlgImagexRestore 对话框
 
 #define TIMER_COUNT_USED_TIME 1 
@@ -82,6 +86,8 @@ BEGIN_MESSAGE_MAP(CDlgImagexRestore, CDialogEx)
 	ON_MESSAGE(WM_MYMSG_IMAGEX_INSTALL_TOTAL_PROGRESS,&CDlgImagexRestore::OnUpdateTotalProgress)
 	ON_BN_CLICKED(IDCANCEL, &CDlgImagexRestore::OnBnClickedCancel)
 	ON_WM_TIMER()
+	ON_BN_CLICKED(IDC_CHECK_BOOT_AFTER, &CDlgImagexRestore::OnBnClickedCheckBootAfter)
+	ON_BN_CLICKED(IDC_CHECK_HALT_AFTER, &CDlgImagexRestore::OnBnClickedCheckHaltAfter)
 END_MESSAGE_MAP()
 
 void CDlgImagexRestore::SetOneKeyImageStoreCfg( int iWimIndex, const CString& strRestoreDestPartionName, const CString& strRestoreDestPartionIDs, const CString& strSourceMain, const CString& strSourceSub )
@@ -455,8 +461,22 @@ LRESULT CDlgImagexRestore::OnUpdateTotalProgress( WPARAM wParma,LPARAM lParam )
 		{
 			m_strNotice.Format(L"添加系统引导时发生了错误：%d",eCode);
 		}else{
-			MessageBox(L"成功安装系统");
-			EndDialog(IDOK);
+			IComfirmDlgModule* pModule = NULL;
+			if (m_bReboot)
+			{
+				pModule = new CRebootNoticeModule;
+			}
+			else if (m_bHalt)
+			{
+				pModule = new CShutdownNoticeModule;
+			}
+			CDlgConfirmWithDefault dlg(pModule, NULL);
+			if (dlg.DoModal() == IDCANCEL)
+			{
+				EndDialog(IDCANCEL);
+			}else
+				EndDialog(IDOK);
+			delete pModule;
 		}
 		break;
 	}
@@ -483,4 +503,28 @@ void CDlgImagexRestore::EndTasks()
 	Process::KillProcess("bcdboot.exe");
 	// TODO: 这里直接杀死imagex进程似乎会出现蓝屏错误，还需要后面继续验证。
 	//PostMessage(WM_ENDING_TASK_FINISH);
+}
+
+
+void CDlgImagexRestore::OnBnClickedCheckBootAfter()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	UpdateData(TRUE);
+	if (m_bReboot && m_bHalt)
+	{
+		m_bHalt = FALSE;
+		UpdateData(FALSE);
+	}
+}
+
+
+void CDlgImagexRestore::OnBnClickedCheckHaltAfter()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	UpdateData(TRUE);
+	if (m_bHalt && m_bReboot)
+	{
+		m_bReboot = FALSE;
+		UpdateData(FALSE);
+	}
 }

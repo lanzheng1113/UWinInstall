@@ -115,14 +115,18 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CmdExecuter.h" />
+    <ClInclude Include="ComfirmDlgModule.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="DialogImagexBackup.h" />
+    <ClInclude Include="DlgConfirmWithDefault.h" />
     <ClInclude Include="DlgImagexRestore.h" />
     <ClInclude Include="DriverInfo.h" />
     <ClInclude Include="InterfaceCallBack.h" />
     <ClInclude Include="Markup.h" />
     <ClInclude Include="PartionInfo.h" />
+    <ClInclude Include="RebootNoticeModule.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="ShutdownNoticeModule.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="UPETool.h" />
@@ -134,10 +138,13 @@
   <ItemGroup>
     <ClCompile Include="CmdExecuter.cpp" />
     <ClCompile Include="DialogImagexBackup.cpp" />
+    <ClCompile Include="DlgConfirmWithDefault.cpp" />
     <ClCompile Include="DlgImagexRestore.cpp" />
     <ClCompile Include="DriverInfo.cpp" />
     <ClCompile Include="Markup.cpp" />
     <ClCompile Include="PartionInfo.cpp" />
+    <ClCompile Include="RebootNoticeModule.cpp" />
+    <ClCompile Include="ShutdownNoticeModule.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
