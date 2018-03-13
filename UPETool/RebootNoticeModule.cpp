@@ -16,5 +16,5 @@ CRebootNoticeModule::~CRebootNoticeModule(void)
 
 void CRebootNoticeModule::DoWhileOk()
 {
-	WinExec("X\\Windows\\system32\\cmd.exe /c shutdown /r /t 0",SW_HIDE);
+	WinExec("X:\\Windows\\system32\\cmd.exe /c shutdown /r /t 0",SW_HIDE);
 }

@@ -473,13 +473,16 @@ LRESULT CDlgImagexRestore::OnUpdateTotalProgress( WPARAM wParma,LPARAM lParam )
 			{
 				pModule = new CShutdownNoticeModule;
 			}
-			CDlgConfirmWithDefault dlg(pModule, NULL);
-			if (dlg.DoModal() == IDCANCEL)
+			if (pModule)
 			{
-				EndDialog(IDCANCEL);
-			}else
-				EndDialog(IDOK);
-			delete pModule;
+				CDlgConfirmWithDefault dlg(pModule, NULL);
+				if (dlg.DoModal() == IDCANCEL)
+				{
+					EndDialog(IDCANCEL);
+				}else
+					EndDialog(IDOK);
+				delete pModule;
+			}
 		}
 		break;
 	}

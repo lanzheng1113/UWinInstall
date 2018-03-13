@@ -14,5 +14,5 @@ CShutdownNoticeModule::~CShutdownNoticeModule(void)
 
 void CShutdownNoticeModule::DoWhileOk()
 {
-	WinExec("X\\Windows\\system32\\cmd.exe /c shutdown /s /t 0",SW_HIDE);
+	WinExec("X:\\Windows\\system32\\cmd.exe /c shutdown /s /t 0",SW_HIDE);
 }
