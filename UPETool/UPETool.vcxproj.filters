@@ -28,6 +28,7 @@
     <None Include="res\ISODrive.sys" />
     <None Include="res\bcdboot.exe" />
     <None Include="res\imagex.exe" />
+    <None Include="..\Release\ExtraSetup.exe" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="UPETool.h">
@@ -90,6 +91,9 @@
     <ClInclude Include="ShutdownNoticeModule.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="ExtraSetup.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="UPETool.cpp">
@@ -132,6 +136,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="ShutdownNoticeModule.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ExtraSetup.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

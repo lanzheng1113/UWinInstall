@@ -7,6 +7,7 @@
 #include "DlgConfirmWithDefault.h"
 #include "RebootNoticeModule.h"
 #include "ShutdownNoticeModule.h"
+#include "ExtraSetup.h"
 #include "afxdialogex.h"
 #include "PartionInfo.h"
 #include "UserMsg.h"
@@ -274,6 +275,8 @@ UINT CDlgImagexRestore::DoImagexRestoreInternal()
 		if (iResult == 0)
 		{
 			LOG_INFO("执行bcdboot.exe添加引导成功");
+			CExtraSetup st;
+			return st.AddExtraSetup();
 		}else{
 			LOG_INFO("执行bcdboot.exe添加引导失败");
 		}

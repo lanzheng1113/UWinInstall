@@ -103,6 +103,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <None Include="..\Release\ExtraSetup.exe" />
     <None Include="ReadMe.txt" />
     <None Include="res\bcdboot.exe" />
     <None Include="res\ghopwd.exe" />
@@ -121,6 +122,7 @@
     <ClInclude Include="DlgConfirmWithDefault.h" />
     <ClInclude Include="DlgImagexRestore.h" />
     <ClInclude Include="DriverInfo.h" />
+    <ClInclude Include="ExtraSetup.h" />
     <ClInclude Include="InterfaceCallBack.h" />
     <ClInclude Include="Markup.h" />
     <ClInclude Include="PartionInfo.h" />
@@ -141,6 +143,7 @@
     <ClCompile Include="DlgConfirmWithDefault.cpp" />
     <ClCompile Include="DlgImagexRestore.cpp" />
     <ClCompile Include="DriverInfo.cpp" />
+    <ClCompile Include="ExtraSetup.cpp" />
     <ClCompile Include="Markup.cpp" />
     <ClCompile Include="PartionInfo.cpp" />
     <ClCompile Include="RebootNoticeModule.cpp" />
