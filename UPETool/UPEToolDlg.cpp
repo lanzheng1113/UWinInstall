@@ -21,6 +21,7 @@
 // CUPEToolDlg 对话框
 using std::string;
 #include "DlgImagexRestore.h"
+#include "DlgGhostRestoreConfirm.h"
 
 CUPEToolDlg::CUPEToolDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CUPEToolDlg::IDD, pParent)
@@ -51,7 +52,6 @@ BEGIN_MESSAGE_MAP(CUPEToolDlg, CDialogEx)
 	ON_BN_SETFOCUS(IDC_RADIO_BACKUP_GHOST, &CUPEToolDlg::OnBnSetfocusRadioBackupGhost)
 	ON_BN_SETFOCUS(IDC_RADIO_BACKUP_IMAGEX, &CUPEToolDlg::OnBnSetfocusRadioBackupImagex)
 	ON_MESSAGE(WM_MYMSG_GHOST_BACKUP_END,&CUPEToolDlg::OnGhostBackUpEnd)
-	ON_MESSAGE(WM_MYMSG_GHOST_RESTORE_END,&CUPEToolDlg::OnRestoreDataEnd)
 	ON_COMMAND(ID__32771, &CUPEToolDlg::OnMenuOpenPartion)
 	ON_COMMAND(ID__32772, &CUPEToolDlg::OnMenuFormatPartion)
 	ON_CBN_SELCHANGE(IDC_COMBO_IsoGhost, &CUPEToolDlg::OnCbnSelchangeComboIsoghost)
@@ -108,7 +108,7 @@ void __cdecl ThreadFunBackupGhost(void* ThreadParam)
 			pMainDlg->PostMessageW(WM_MYMSG_GHOST_BACKUP_END);
 	}
 }
-
+/*
 void __cdecl ThreadFunRestoreGho(void* ThreadParam)
 {
 	CUPEToolDlg* pDlg = (CUPEToolDlg*)ThreadParam;
@@ -140,7 +140,7 @@ void __cdecl ThreadFunRestoreGho(void* ThreadParam)
 			pDlg->PostMessageW(WM_MYMSG_GHOST_RESTORE_END);
 	}
 }
-
+*/
 BOOL CUPEToolDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
@@ -179,6 +179,7 @@ BOOL CUPEToolDlg::OnInitDialog()
 		swprintf(szText,L"%.1fGB",gbTotal);
 		m_listPartions.SetItemText(i,5,szText);
 	}
+	m_listPartions.SetItemState(0, LVNI_FOCUSED | LVIS_SELECTED, LVNI_FOCUSED | LVIS_SELECTED);
 	m_comboIsoGho.InsertString(0,L"正在查找中……");
 	m_comboIsoGho.SetCurSel(0);
 	m_comboIsoGho.EnableWindow(FALSE);
@@ -317,8 +318,11 @@ void CUPEToolDlg::DoGhostRestore(const CString& strFilePath)
 		}
 		int nItem = m_listPartions.GetNextSelectedItem(pos);
 		m_strGhostRestoreDest = m_listPartions.GetItemText(nItem,1);
+		CString strRestoreDestPartionName = m_listPartions.GetItemText(nItem,0);
 		ASSERT(nItem != -1 && m_strGhostRestoreDest != _T(""));
-		CloseHandle((HANDLE)_beginthread(ThreadFunRestoreGho, 0, this));
+		//弹出确认对话框
+		CDlgGhostRestoreConfirm dlg(strRestoreDestPartionName,m_strGhostRestoreDest,m_strGhostRestoreSrc,NULL);
+		dlg.DoModal();
 	}
 }
 
@@ -617,10 +621,6 @@ void CUPEToolDlg::OnMenuFormatPartion()
 	}
 }
 
-LRESULT CUPEToolDlg::OnRestoreDataEnd( WPARAM wParam,LPARAM lParam )
-{
-	return 0;
-}
 
 void CUPEToolDlg::OnCbnSelchangeComboIsoghost()
 {
@@ -748,6 +748,7 @@ void CUPEToolDlg::OnCbnSelchangeComboIsoghost()
 						extMenu.m_strName = "------------------------------------------------------";
 						extMenu.m_strParentOrFirstChild = wimOrGhostPath.c_str();
 						m_ExtraItems.push_back(extMenu);
+						m_comboIsoGho.AddString(extMenu.m_strName);
 
 						CExtraItem ext;
 						ext.m_bIsFolder = FALSE;

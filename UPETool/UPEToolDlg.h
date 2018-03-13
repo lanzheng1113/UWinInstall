@@ -56,7 +56,6 @@ public:
 
 	LRESULT OnMesgFindISOEnd(WPARAM,LPARAM);
 	LRESULT OnGhostBackUpEnd(WPARAM wParam,LPARAM lParam);
-	LRESULT OnRestoreDataEnd(WPARAM wParam,LPARAM lParam);
 // й╣ож
 protected:
 	HICON m_hIcon;

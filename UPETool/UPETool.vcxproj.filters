@@ -94,6 +94,9 @@
     <ClInclude Include="ExtraSetup.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="DlgGhostRestoreConfirm.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="UPETool.cpp">
@@ -139,6 +142,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="ExtraSetup.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgGhostRestoreConfirm.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
