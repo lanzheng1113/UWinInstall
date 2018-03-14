@@ -3,8 +3,10 @@
 
 #include "stdafx.h"
 #include "ExtraSetup.h"
-
+#include <ShellAPI.h>
+#include <process.h>
 #define MAX_LOADSTRING 100
+#define WM_TRAY_MSG (WM_USER+1)
 
 // 全局变量:
 HINSTANCE hInst;								// 当前实例
@@ -121,6 +123,35 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    return TRUE;
 }
 
+NOTIFYICONDATA nid;  
+/**
+ * \brief 创建托盘图标
+ */
+static VOID CreateTrayIcon(HWND hWndParent)
+{
+ 	nid.cbSize = sizeof(nid);  
+ 	nid.hWnd = hWndParent;  
+ 	nid.uID = 0;  
+ 	nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;  
+ 	nid.uCallbackMessage = WM_TRAY_MSG;  
+ 	nid.hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_SMALL));  
+ 	lstrcpy(nid.szTip, L"正在执行最后部署……");  
+ 	Shell_NotifyIcon(NIM_ADD, &nid);
+ };
+/**
+ * \brief 设置泡泡提示
+ */
+static BOOL SetToolTip(LPCTSTR Message)
+{
+	nid.uFlags = NIF_INFO;
+	nid.uID=0;
+	nid.dwInfoFlags=1;
+	_tcsncpy(nid.szInfoTitle,L"最后部署",64);
+	_tcsncpy(nid.szInfo,Message,256);
+	return Shell_NotifyIcon(NIM_MODIFY,&nid);
+}
+
+void __cdecl ThreadFunExtraSetup(void* ThreadParam);
 //
 //  函数: WndProc(HWND, UINT, WPARAM, LPARAM)
 //
@@ -163,6 +194,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;
+	case WM_CREATE:
+		{
+			CreateTrayIcon(hWnd);
+			SetToolTip(_T("正在进行最后部署，请不要关闭电源……"));
+			CloseHandle((HANDLE)_beginthread(ThreadFunExtraSetup,0,NULL));
+			break;
+		}
 	default:
 		return DefWindowProc(hWnd, message, wParam, lParam);
 	}

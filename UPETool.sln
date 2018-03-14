@@ -2,6 +2,9 @@
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UPETool", "UPETool\UPETool.vcxproj", "{FAEE3C84-A385-422A-B0F8-8F7DDD21ABE6}"
+	ProjectSection(ProjectDependencies) = postProject
+		{45EE2E2B-631A-41B9-8F53-CB9C25603CB8} = {45EE2E2B-631A-41B9-8F53-CB9C25603CB8}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ExtraSetup", "ExtraSetup\ExtraSetup.vcxproj", "{45EE2E2B-631A-41B9-8F53-CB9C25603CB8}"
 EndProject
