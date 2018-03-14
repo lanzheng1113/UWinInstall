@@ -22,6 +22,7 @@
 using std::string;
 #include "DlgImagexRestore.h"
 #include "DlgGhostRestoreConfirm.h"
+#include "DlgXPInstall.h"
 
 CUPEToolDlg::CUPEToolDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CUPEToolDlg::IDD, pParent)
@@ -409,6 +410,11 @@ void CUPEToolDlg::OnBnClickedOk()
 						else if (m_bIsISOWinXPInstall)
 						{
 							//xp原版的安装。
+							LOG_INFO("准备安装原版XP系统");
+							CDlgXPInstall dlg;
+							dlg.setDestPartionName(strRestoreDestPartionName);
+							dlg.setDestPartionID(strRestoreDestPartionIDs);
+							dlg.DoModal();
 							return;
 						}
 						else
@@ -737,6 +743,29 @@ void CUPEToolDlg::OnCbnSelchangeComboIsoghost()
 					LOG_INFO("ISO类型为未知类型");
 					m_bIsWIMInstall = FALSE;
 					break;
+				case ISO_WINNT32:
+					{
+						//Windows 安装
+						m_bIsISOWinXPInstall = TRUE;
+						m_bIsWIMInstall = FALSE;
+						CExtraItem extMenu;
+						extMenu.m_bIsFolder = TRUE;
+						extMenu.m_bIsGhost = FALSE;
+						extMenu.m_strName = "------------------------------------------------------";
+						extMenu.m_strParentOrFirstChild = wimOrGhostPath.c_str();
+						m_ExtraItems.push_back(extMenu);
+						m_comboIsoGho.AddString(extMenu.m_strName);
+
+						CExtraItem ext;
+						ext.m_bIsFolder = FALSE;
+						ext.m_bIsGhost = FALSE;
+						ext.m_strName = wimOrGhostPath.c_str();
+						ext.m_strParentOrFirstChild = strCurrentSel;
+						ext.m_strCmdLine = L"";  //对于GHOST不需要命令行，因为m_strName已经指定了文件名
+						m_ExtraItems.push_back(ext);  //增加一项Z:/xxx/xxx.gho，并且跳转到这一项作为当前项。
+						m_comboIsoGho.SetCurSel(m_comboIsoGho.AddString(wimOrGhostPath.c_str()));
+						break;
+					}
 				case ISO_GHOST: 
 					{
 						m_bIsWIMInstall = FALSE;

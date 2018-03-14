@@ -133,6 +133,11 @@ vector<wstring> CVirtualCDDriver::FindInternal( const wstring& root,int FolderLe
 
 ISOType CVirtualCDDriver::GetIsoType( wstring& WimOrGhoPath )
 {
+	if (PathFileExists(_T("Z:\\I386\\WINNT32.EXE")))
+	{
+		WimOrGhoPath = L"Z:\\I386\\WINNT32.EXE";
+		return ISO_WINNT32;
+	}
 	vector<wstring> TargetsFound = FindInternal(_T("Z:\\"),0);
 	vector<wstring> GhoList;
 	for (int i = 0; i!=TargetsFound.size(); i++)
@@ -141,7 +146,7 @@ ISOType CVirtualCDDriver::GetIsoType( wstring& WimOrGhoPath )
 		transform(wstrTemp.begin(),wstrTemp.end(),wstrTemp.begin(), towlower);
 		if (CUtil::isStringEndsWith(wstrTemp, L"\\install.wim"))
 		{
-			// 判断是否是wiindow原版安装wim
+			// 判断是否是window原版安装wim
 			WimOrGhoPath = TargetsFound[i];
 			return ISO_WIM;
 		}

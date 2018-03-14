@@ -123,6 +123,7 @@
     <ClInclude Include="DlgConfirmWithDefault.h" />
     <ClInclude Include="DlgGhostRestoreConfirm.h" />
     <ClInclude Include="DlgImagexRestore.h" />
+    <ClInclude Include="DlgXPInstall.h" />
     <ClInclude Include="DriverInfo.h" />
     <ClInclude Include="ExtraSetup.h" />
     <ClInclude Include="InterfaceCallBack.h" />
@@ -145,6 +146,7 @@
     <ClCompile Include="DlgConfirmWithDefault.cpp" />
     <ClCompile Include="DlgGhostRestoreConfirm.cpp" />
     <ClCompile Include="DlgImagexRestore.cpp" />
+    <ClCompile Include="DlgXPInstall.cpp" />
     <ClCompile Include="DriverInfo.cpp" />
     <ClCompile Include="ExtraSetup.cpp" />
     <ClCompile Include="Markup.cpp" />
