@@ -30,6 +30,25 @@ public:
 		m_strSourceMain = sourceMain;
 		m_strSourceSub = sourceSub;
 	}
+private:
+	typedef enum
+	{
+		EFT_NTFS,
+		EFT_FAT32,
+		EFT_USERDEFINE
+	}ETypeFormatXP;
+	enum
+	{
+		XP_INSTALL_SUCCESS,
+		XP_INSTALL_ERR_EXTRACT_SIF,
+		XP_INSTALL_ERR_INSTALL,
+		XP_INSTALL_ERR_BOOT_SECT,
+		XP_INSTALL_ERR_FORMAT
+	};
+	static UINT ThreadFunXpSetup(LPVOID lpThreadParam);
+	UINT doXpSetup();
+	CString m_strKeyTotal;
+	HANDLE m_hThread;
 public:
 	virtual BOOL OnInitDialog();
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
@@ -49,4 +68,6 @@ public:
 	BOOL m_bReboot;
 	BOOL m_bHalt;
 	afx_msg void OnBnClickedOk();
+	LRESULT OnFinishInstall(WPARAM wParam,LPARAM lParam);
+	afx_msg void OnBnClickedCancel();
 };

@@ -1,0 +1,55 @@
+
+[Data]
+    MsDosInitiated="0"
+    UnattendedInstall="Yes"
+
+[Unattended]
+    UnattendMode=ProvideDefault
+    OemPreinstall=No
+    OemSkipEula=Yes
+    TargetPath=\WINDOWS
+
+[GuiUnattended]
+    EncryptedAdminPassword=NO
+    OEMSkipRegional=1
+
+[UserData]
+    ProductKey=lllll-mmmmm-nnnnn-ooooo-ppppp
+
+[FavoritesEx]
+    Title1="百度.url"
+    URL1="https://www.baidu.com"
+    Title2="淘宝网.url"
+    URL2="https://www.taobao.com"
+    Title3="京东商城.url"
+    URL3="https://www.jd.com"
+    Title4="天猫精选.url"
+    URL4="https://www.baidu.com"
+    Title5="9.9包邮.url"
+    URL5="https://www.baidu.com"
+    Title6="手机游戏.url"
+    URL6="https://www.baidu.com"
+    Title7="美女图片.url"
+    URL7="https://www.baidu.com"
+    Title8="女性网.url"
+    URL8="https://www.baidu.com"
+    Title9="小游戏.url"
+    URL9="https://www.baidu.com"
+    Title10="免费电影.url"
+    URL10="https://www.baidu.com"
+    Title11="体育赛事.url"
+    URL11="https://www.baidu.com"
+
+[Branding]
+    BrandIEUsingUnattended=Yes
+
+[URL]
+    Home_Page=https://www.bilibili.com/
+
+[Identification]
+    JoinWorkgroup=WORKGROUP
+
+[Networking]
+    InstallDefaultComponents=Yes
+
+

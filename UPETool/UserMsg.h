@@ -22,3 +22,5 @@
 
 // 取消系统安装的操作已经完成
 //#define WM_ENDING_TASK_FINISH (WM_USER + 108)
+
+#define WM_INSTALL_XP_RESULT (WM_USER+109)

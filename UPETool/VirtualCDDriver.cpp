@@ -135,6 +135,7 @@ ISOType CVirtualCDDriver::GetIsoType( wstring& WimOrGhoPath )
 {
 	if (PathFileExists(_T("Z:\\I386\\WINNT32.EXE")))
 	{
+		LOG_INFO("找到了WINNT32.EXE，判断为xp安装系统。");
 		WimOrGhoPath = L"Z:\\I386\\WINNT32.EXE";
 		return ISO_WINNT32;
 	}

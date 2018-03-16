@@ -411,9 +411,15 @@ void CUPEToolDlg::OnBnClickedOk()
 						{
 							//xp原版的安装。
 							LOG_INFO("准备安装原版XP系统");
+							LOG_INFO("id = %d",m_ExtraItems[i].m_iWimIndex);
+							LOG_INFO("目标分区名字 = %s",String::fromStdWString((LPCTSTR)strRestoreDestPartionName).c_str());
+							LOG_INFO("目标分区的ID = %s",String::fromStdWString((LPCTSTR)strRestoreDestPartionIDs).c_str());
+							LOG_INFO("来源主项 = %s",String::fromStdWString((LPCTSTR)m_ExtraItems[i].m_strSourceMain).c_str());
+							LOG_INFO("目标子项 = %s",String::fromStdWString((LPCTSTR)m_ExtraItems[i].m_strSourceSub).c_str());
 							CDlgXPInstall dlg;
 							dlg.setDestPartionName(strRestoreDestPartionName);
 							dlg.setDestPartionID(strRestoreDestPartionIDs);
+							dlg.setSource(m_ExtraItems[i].m_strSourceMain,m_ExtraItems[i].m_strSourceSub);
 							dlg.DoModal();
 							return;
 						}
@@ -745,6 +751,7 @@ void CUPEToolDlg::OnCbnSelchangeComboIsoghost()
 					break;
 				case ISO_WINNT32:
 					{
+						LOG_INFO("ISO类型为Windows XP 安装");
 						//Windows 安装
 						m_bIsISOWinXPInstall = TRUE;
 						m_bIsWIMInstall = FALSE;
@@ -761,8 +768,10 @@ void CUPEToolDlg::OnCbnSelchangeComboIsoghost()
 						ext.m_bIsGhost = FALSE;
 						ext.m_strName = wimOrGhostPath.c_str();
 						ext.m_strParentOrFirstChild = strCurrentSel;
-						ext.m_strCmdLine = L"";  //对于GHOST不需要命令行，因为m_strName已经指定了文件名
-						m_ExtraItems.push_back(ext);  //增加一项Z:/xxx/xxx.gho，并且跳转到这一项作为当前项。
+						ext.m_strCmdLine = L""; 
+						ext.m_strSourceMain = L"Z:\\I386\\WINNT32.EXE";
+						ext.m_strSourceSub = L"Microsoft Windows XP";
+						m_ExtraItems.push_back(ext);  //增加一项Z:/xxx/xxx.exe，并且跳转到这一项作为当前项。
 						m_comboIsoGho.SetCurSel(m_comboIsoGho.AddString(wimOrGhostPath.c_str()));
 						break;
 					}

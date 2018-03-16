@@ -107,6 +107,7 @@
     <None Include="..\Release\ExtraSetup.exe" />
     <None Include="ReadMe.txt" />
     <None Include="res\bcdboot.exe" />
+    <None Include="res\bootsect.exe" />
     <None Include="res\ghopwd.exe" />
     <None Include="res\Ghost32.exe" />
     <None Include="res\imagex.exe" />
@@ -114,6 +115,7 @@
     <None Include="res\ISODrive.sys" />
     <None Include="res\UPETool.ico" />
     <None Include="res\UPETool.rc2" />
+    <None Include="res\winnt.sif" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CmdExecuter.h" />
